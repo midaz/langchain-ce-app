@@ -202,16 +202,20 @@ def triage_and_answer(issue_text: str) -> dict:
     }
 
 if __name__ == "__main__":
-    # Get the first issue from the dataset for testing
-    test_issue = df.iloc[0]
-    issue_text = f"Title: {test_issue['title']}\nDescription: {test_issue['description']}"
+    # Get first X issues from the dataset
+    test_issues = df.head(10)
     
-    # Run the chain and print results
-    result = triage_and_answer(issue_text)
-    print("\n=== Classification Results ===")
-    print(f"Issue Type: {result['issue_type']}")
-    print(f"Severity: {result['severity']}")
-    print(f"Category: {result['category']}")
-    print(f"Answer: {result['answer']}")
+    print("\n=== Processing 10 Examples ===")
+    for idx, issue in test_issues.iterrows():
+        print(f"\nProcessing Example {idx + 1}")
+        issue_text = f"Title: {issue['title']}\nDescription: {issue['description']}"
+        
+        # Run the chain and print results
+        result = triage_and_answer(issue_text)
+        print(f"Issue Type: {result['issue_type']}")
+        print(f"Severity: {result['severity']}")
+        print(f"Category: {result['category']}")
+        print(f"Answer: {result['answer']}")
+        print("-" * 80)
 
 
