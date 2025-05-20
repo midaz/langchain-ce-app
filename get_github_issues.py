@@ -34,6 +34,7 @@ while True:
 dataset = [
     {
         "issue_number": issue["number"],
+        "issue_url": issue["html_url"],
         "title": issue["title"],
         "description": issue.get("body", ""),
         "labels": ", ".join(label["name"] for label in issue.get("labels", [])),

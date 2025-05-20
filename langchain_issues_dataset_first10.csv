@@ -1,0 +1,1395 @@
+issue_number,issue_url,title,description,labels,created_at,comments_count,state
+31285,https://github.com/langchain-ai/langchain/issues/31285,Bedrock and Vertex Claude 3.7: thinking config not working with binding tools,"### Checked other resources
+
+- [x] I added a very descriptive title to this issue.
+- [x] I used the GitHub search to find a similar question and didn't find it.
+- [x] I am sure that this is a bug in LangChain rather than my code.
+- [x] The bug is not resolved by updating to the latest stable version of LangChain (or the specific integration package).
+- [x] I posted a self-contained, minimal, reproducible example. A maintainer can copy it and run it AS IS.
+
+### Example Code
+
+from langchain_aws import ChatBedrock
+
+raw_model = ChatBedrock(
+    model=credentials.claude_3_7_model,
+    region_name=credentials.bedrock_region_name,
+    max_tokens=8096,
+    model_kwargs={
+        ""thinking"": {
+            ""type"": ""enabled"",
+            ""budget_tokens"": 2048
+        }
+    },
+)
+
+model = raw_model.bind_tools([search, info_tool], tool_choice=""any"")
+
+
+### Error Message and Stack Trace (if applicable)
+
+    raise EventStreamError(parsed_response, self._operation_name)
+botocore.exceptions.EventStreamError: An error occurred (validationException) when calling the InvokeModelWithResponseStream operation: Thinking may not be enabled when tool_choice forces tool use.
+
+### Description
+
+The request fails when using the thinking parameter. It works in LangChain.js but not in the Python version. According to the official Anthropic documentation ([Extended Thinking](https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking)), there is an implementation that supports tools along with thinking.
+
+### System Info
+
+langchain==0.3.25  
+langchain-aws==0.2.23  
+langchain-azure-ai==0.1.2  
+langchain-community==0.3.24  
+langchain-core==0.3.59  
+langchain-experimental==0.3.4  
+langchain-google-community[vertexaisearch]==2.0.7  
+langchain-google-vertexai==2.0.24",,2025-05-20T08:02:24Z,0,open
+31282,https://github.com/langchain-ai/langchain/issues/31282,"IBM WatsonX Models can´t work with tool_calls, always use tools","### Checked other resources
+
+- [x] I added a very descriptive title to this issue.
+- [x] I used the GitHub search to find a similar question and didn't find it.
+- [x] I am sure that this is a bug in LangChain rather than my code.
+- [x] The bug is not resolved by updating to the latest stable version of LangChain (or the specific integration package).
+- [x] I posted a self-contained, minimal, reproducible example. A maintainer can copy it and run it AS IS.
+
+### Example Code
+
+I try to follow the tutorial https://python.langchain.com/docs/tutorials/qa_chat_history/ with IBM WatsonX Models but the agents always call the tool, even with a ""Hello"" message
+
+
+
+### Error Message and Stack Trace (if applicable)
+
+_No response_
+
+### Description
+
+I try to follow the tutorial https://python.langchain.com/docs/tutorials/qa_chat_history/ with IBM WatsonX Models but the agents always call the tool, even with a ""Hello"" message
+
+
+### System Info
+
+python",🤖:bug,2025-05-19T16:57:08Z,0,open
+31265,https://github.com/langchain-ai/langchain/issues/31265,Google Drive Loader Return 403 googleapiclient.errors using Service Account,"### Checked other resources
+
+- [x] I added a very descriptive title to this issue.
+- [x] I used the GitHub search to find a similar question and didn't find it.
+- [x] I am sure that this is a bug in LangChain rather than my code.
+- [x] The bug is not resolved by updating to the latest stable version of LangChain (or the specific integration package).
+- [x] I posted a self-contained, minimal, reproducible example. A maintainer can copy it and run it AS IS.
+
+### Example Code
+
+The following code:
+`
+    loader = GoogleDriveLoader(
+    file_ids=[""1gFJqn5G0sUpLO5L7Np-p095rfEJbQnvGU0kw4axT2yk"",""1sCWGytYV6lB3ZFzfsO-NHApGDUQXpLFTKQ8YkLvyd80""],
+    file_loader_cls=UnstructuredLoader,
+    file_loader_kwargs={""chunking_strategy"":""basic"",""max_characters"":1500, ""metadata_filename"": ""google_files""},
+    service_account_key=""./credentials.json"",
+    recursive=False,
+    )
+    docs = loader.load()
+    print(docs)
+
+`
+
+
+### Error Message and Stack Trace (if applicable)
+
+Traceback (most recent call last):
+  File ""E:\PharmCare\pharmcare-chatbot\bot_v2.3\test.py"", line 60, in <module>
+    docs = loader.load()
+           ^^^^^^^^^^^^^
+  File ""e:\PharmCare\pharmcare-chatbot\.venv\Lib\site-packages\langchain_google_community\drive.py"", line 598, in load
+    return self._load_file_from_ids()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""e:\PharmCare\pharmcare-chatbot\.venv\Lib\site-packages\langchain_google_community\drive.py"", line 586, in _load_file_from_ids
+    docs.extend(self._load_file_from_id(file_id))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""E:\PharmCare\pharmcare-chatbot\bot_v2.3\src\google_driveloader.py"", line 45, in _load_file_from_id
+    return self._load_sheet_from_id(file[""id""])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""e:\PharmCare\pharmcare-chatbot\.venv\Lib\site-packages\langchain_google_community\drive.py"", line 342, in _load_sheet_from_id
+    spreadsheet = sheets_service.spreadsheets().get(spreadsheetId=id).execute()
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""e:\PharmCare\pharmcare-chatbot\.venv\Lib\site-packages\googleapiclient\_helpers.py"", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""e:\PharmCare\pharmcare-chatbot\.venv\Lib\site-packages\googleapiclient\http.py"", line 938, in execute
+    raise HttpError(resp, content, uri=self.uri)
+googleapiclient.errors.HttpError: <HttpError 404 when requesting https://sheets.googleapis.com/v4/spreadsheets/1gFJqn5G0sUpLO5L7Np-p095rfEJbQnvGU0kw4axT2yk?alt=json returned ""Requested entity was not found."". Details: ""Requested entity was not found."">
+
+### Description
+
+I am trying to use service account to
+
+### System Info
+
+google-api-core==2.24.2
+google-auth==2.39.0
+google-cloud-bigquery==3.27.0
+google-cloud-core==2.4.3
+google-cloud-resource-manager==1.14.2
+google-cloud-storage==2.19.0
+google-crc32c==1.6.0
+google-resumable-media==2.7.2
+googleapis-common-protos==1.69.2
+grpc-google-iam-v1==0.14.2
+google-cloud==0.34.0
+langchain-google-community == 2.0.7
+google-auth-oauthlib==1.2.1
+google-api-python-client==2.167.0
+google-cloud==0.34.0
+google-cloud-translate==3.20.2
+langchain-google-cloud-sql-pg==0.13.0",🤖:bug,2025-05-17T12:26:50Z,0,open
+31261,https://github.com/langchain-ai/langchain/issues/31261,Structured output via `with_structured_output` not work with configurable fields,"### Checked other resources
+
+- [x] I added a very descriptive title to this issue.
+- [x] I used the GitHub search to find a similar question and didn't find it.
+- [x] I am sure that this is a bug in LangChain rather than my code.
+- [x] The bug is not resolved by updating to the latest stable version of LangChain (or the specific integration package).
+- [x] I posted a self-contained, minimal, reproducible example. A maintainer can copy it and run it AS IS.
+
+### Example Code
+
+```python
+import os
+
+from dotenv import find_dotenv, load_dotenv
+from langchain.chat_models.base import init_chat_model
+from pydantic import BaseModel, Field
+
+
+load_dotenv(find_dotenv("".local.env""), override=True)
+
+
+class ResponseSchema(BaseModel):
+    response: str = Field(
+        description=""The response on user query."",
+    )
+    alternative_response: str = Field(
+        description=""The alternative response on user query."",
+    )
+
+
+if __name__ == ""__main__"":
+    DEFAULT_CONFIG_PREFIX = ""agent""
+    DEFAULT_CONFIGURABLE_FIELDS = (""temperature"", ""max_tokens"", ""top_p"", ""streaming"")
+    DEFAULT_MODEL_PARAMETER_VALUES = dict(
+        temperature=0.0,
+        max_tokens=1024,
+        top_p=0.7,
+        streaming=False,
+    )
+
+    configurable_model = init_chat_model(
+        model=os.getenv(""OPENAI_MODEL_NAME""),
+        model_provider=""openai"",
+        config_prefix=DEFAULT_CONFIG_PREFIX,
+        configurable_fields=DEFAULT_CONFIGURABLE_FIELDS,
+        openai_api_key=os.getenv(""OPENAI_API_KEY""),
+        openai_api_base=os.getenv(""OPENAI_API_BASE_URL""),
+        **DEFAULT_MODEL_PARAMETER_VALUES
+    )
+
+    print(f""Configurable model type: {type(configurable_model)}"")
+    print(""=""*25)
+
+    model_so = configurable_model.with_structured_output(ResponseSchema)
+
+    print(f""Model with SO type: {type(configurable_model)}"")
+    print(""=""*25)
+
+    result = configurable_model.invoke(""Who is the president of Brasil?"", config={""temperature"": 0.5})
+
+    print(f""Result type: {type(result)}"")
+    print(f""Result: {result}"")
+    print(""=""*25)
+
+```
+
+### Error Message and Stack Trace (if applicable)
+
+```text
+Configurable model type: <class 'langchain.chat_models.base._ConfigurableModel'>
+=========================
+Model with SO type: <class 'langchain.chat_models.base._ConfigurableModel'>
+=========================
+Result type: <class 'langchain_core.messages.ai.AIMessage'>
+Result: content='As of my last update in October 2023, the president of Brazil is Luiz Inácio Lula da Silva, commonly known as Lula. He took office on January 1, 2023. Please verify with up-to-date sources, as political situations can change.' additional_kwargs={'refusal': None} response_metadata={'token_usage': {'completion_tokens': 55, 'prompt_tokens': 14, 'total_tokens': 69, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 0, 'rejected_prediction_tokens': 0}, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}}, 'model_name': 'gpt-4o-mini-2024-07-18', 'system_fingerprint': 'fp_ded0d14823', 'id': 'chatcmpl-BXw4umM1mamPhsA3cUuec0Jz5zyjj', 'service_tier': None, 'finish_reason': 'stop', 'logprobs': None} id='run--40b7d5cb-c66b-4537-8761-a7e53a64117c-0' usage_metadata={'input_tokens': 14, 'output_tokens': 55, 'total_tokens': 69, 'input_token_details': {'audio': 0, 'cache_read': 0}, 'output_token_details': {'audio': 0, 'reasoning': 0}}
+=========================
+```
+
+### Description
+
+- I’m trying to use LangChain to wrap a chat model with a Pydantic schema and configurable fields so that calls to `invoke` return typed, structured output.
+- When I called `model. invoke (...)`, I expected to see a response conforming to my `ResponseSchema` (with `response` and `alternative_response` fields).
+- But I still get a plain `AIMessage` object containing unstructured content instead of the schema-based response.
+
+Found related issues:
+- https://github.com/langchain-ai/langchain/issues/23167
+- https://github.com/langchain-ai/langchain/discussions/19236
+
+
+### System Info
+
+System Information
+------------------
+> OS:  Darwin
+> OS Version:  Darwin Kernel Version 24.3.0: Thu Jan  2 20:24:06 PST 2025; root:xnu-11215.81.4~3/RELEASE_ARM64_T8103
+> Python Version:  3.13.2 (main, Feb  4 2025, 14:51:09) [Clang 16.0.0 (clang-1600.0.26.6)]
+
+Package Information
+-------------------
+> langchain_core: 0.3.60
+> langchain: 0.3.25
+> langchain_community: 0.3.24
+> langsmith: 0.3.31
+> langchain_anthropic: 0.3.12
+> langchain_aws: 0.2.22
+> langchain_deepseek: 0.1.3
+> langchain_google_genai: 2.1.4
+> langchain_google_vertexai: 2.0.21
+> langchain_groq: 0.3.2
+> langchain_ollama: 0.3.2
+> langchain_openai: 0.3.16
+> langchain_text_splitters: 0.3.8
+> langgraph_agent_toolkit: Installed. No version info available.
+> langgraph_api: 0.1.23
+> langgraph_cli: 0.2.10
+> langgraph_license: Installed. No version info available.
+> langgraph_runtime: Installed. No version info available.
+> langgraph_runtime_inmem: 0.0.9
+> langgraph_sdk: 0.1.66
+> langgraph_supervisor: 0.0.21
+
+Optional packages not installed
+-------------------------------
+> langserve
+
+Other Dependencies
+------------------
+> aiohttp<4.0.0,>=3.8.3: Installed. No version info available.
+> anthropic<1,>=0.49.0: Installed. No version info available.
+> anthropic[vertexai]: Installed. No version info available.
+> async-timeout<5.0.0,>=4.0.0;: Installed. No version info available.
+> blockbuster: 1.5.24
+> boto3: 1.38.6
+> bottleneck: 1.4.2
+> click: 8.1.8
+> cloudpickle: 3.1.1
+> cryptography: 44.0.2
+> dataclasses-json<0.7,>=0.5.7: Installed. No version info available.
+> filetype: 1.2.0
+> google-ai-generativelanguage: 0.6.18
+> google-cloud-aiplatform: 1.91.0
+> google-cloud-storage: 2.19.0
+> groq<1,>=0.4.1: Installed. No version info available.
+> httpx: 0.28.1
+> httpx-sse: 0.4.0
+> httpx-sse<1.0.0,>=0.4.0: Installed. No version info available.
+> jsonpatch<2.0,>=1.33: Installed. No version info available.
+> jsonschema-rs: 0.29.1
+> langchain-anthropic;: Installed. No version info available.
+> langchain-aws;: Installed. No version info available.
+> langchain-azure-ai;: Installed. No version info available.
+> langchain-cohere;: Installed. No version info available.
+> langchain-community;: Installed. No version info available.
+> langchain-core<0.4.0,>=0.3.40: Installed. No version info available.
+> langchain-core<1.0.0,>=0.3.47: Installed. No version info available.
+> langchain-core<1.0.0,>=0.3.49: Installed. No version info available.
+> langchain-core<1.0.0,>=0.3.51: Installed. No version info available.
+> langchain-core<1.0.0,>=0.3.52: Installed. No version info available.
+> langchain-core<1.0.0,>=0.3.53: Installed. No version info available.
+> langchain-core<1.0.0,>=0.3.58: Installed. No version info available.
+> langchain-core<1.0.0,>=0.3.59: Installed. No version info available.
+> langchain-deepseek;: Installed. No version info available.
+> langchain-fireworks;: Installed. No version info available.
+> langchain-google-genai;: Installed. No version info available.
+> langchain-google-vertexai;: Installed. No version info available.
+> langchain-groq;: Installed. No version info available.
+> langchain-huggingface;: Installed. No version info available.
+> langchain-mistralai: Installed. No version info available.
+> langchain-mistralai;: Installed. No version info available.
+> langchain-ollama;: Installed. No version info available.
+> langchain-openai;: Installed. No version info available.
+> langchain-openai<1.0.0,>=0.3.9: Installed. No version info available.
+> langchain-perplexity;: Installed. No version info available.
+> langchain-text-splitters<1.0.0,>=0.3.8: Installed. No version info available.
+> langchain-together;: Installed. No version info available.
+> langchain-xai;: Installed. No version info available.
+> langchain<1.0.0,>=0.3.25: Installed. No version info available.
+> langgraph: 0.4.5
+> langgraph-checkpoint: 2.0.26
+> langgraph-prebuilt<0.2.0,>=0.1.7: Installed. No version info available.
+> langgraph>=0.3.5: Installed. No version info available.
+> langsmith-pyo3: Installed. No version info available.
+> langsmith<0.4,>=0.1.125: Installed. No version info available.
+> langsmith<0.4,>=0.1.126: Installed. No version info available.
+> langsmith<0.4,>=0.1.17: Installed. No version info available.
+> numexpr: 2.10.2
+> numpy: 2.2.4
+> numpy>=1.26.2;: Installed. No version info available.
+> numpy>=2.1.0;: Installed. No version info available.
+> ollama<1,>=0.4.4: Installed. No version info available.
+> openai-agents: Installed. No version info available.
+> openai<2.0.0,>=1.68.2: Installed. No version info available.
+> opentelemetry-api: Installed. No version info available.
+> opentelemetry-exporter-otlp-proto-http: Installed. No version info available.
+> opentelemetry-sdk: Installed. No version info available.
+> orjson: 3.10.16
+> packaging: 24.2
+> packaging<25,>=23.2: Installed. No version info available.
+> pyarrow: 19.0.1
+> pydantic: 2.11.3
+> pydantic-settings<3.0.0,>=2.4.0: Installed. No version info available.
+> pydantic<3.0.0,>=2.7.4: Installed. No version info available.
+> pydantic>=2.7.4: Installed. No version info available.
+> pyjwt: 2.10.1
+> pytest: 8.3.5
+> python-dotenv: 1.1.0
+> PyYAML>=5.3: Installed. No version info available.
+> requests: 2.32.3
+> requests-toolbelt: 1.0.0
+> requests<3,>=2: Installed. No version info available.
+> rich: Installed. No version info available.
+> SQLAlchemy<3,>=1.4: Installed. No version info available.
+> sse-starlette: 2.1.3
+> starlette: 0.46.1
+> structlog: 25.2.0
+> tenacity: 9.1.2
+> tenacity!=8.4.0,<10,>=8.1.0: Installed. No version info available.
+> tenacity!=8.4.0,<10.0.0,>=8.1.0: Installed. No version info available.
+> tiktoken<1,>=0.7: Installed. No version info available.
+> typing-extensions>=4.7: Installed. No version info available.
+> uvicorn: 0.34.2
+> validators: 0.34.0
+> watchfiles: 1.0.5
+> zstandard: 0.23.0","investigate, Ɑ:  core",2025-05-16T20:49:28Z,0,open
+31256,https://github.com/langchain-ai/langchain/issues/31256,Error when passing prompt to create_react_agent(),"### Checked other resources
+
+- [x] I added a very descriptive title to this issue.
+- [x] I used the GitHub search to find a similar question and didn't find it.
+- [x] I am sure that this is a bug in LangChain rather than my code.
+- [x] The bug is not resolved by updating to the latest stable version of LangChain (or the specific integration package).
+- [x] I posted a self-contained, minimal, reproducible example. A maintainer can copy it and run it AS IS.
+
+### Example Code
+
+def create_gemini_react_agent(system_prompt):
+    llm = init_llm()
+    system_prompt = system_prompt
+    agent = create_react_agent(
+        llm.bind_tools(tools),
+        tools=tools,
+        prompt=system_prompt,
+        checkpointer=checkpointer
+    )
+    
+    return agent
+
+def generate_answer_with_gemini(system_prompt, query: str, thread_id: str = ""default"") -> str:
+    if not query or len(query.strip()) == 0:
+        return ""Please provide a valid question or request.""
+    
+    agent = create_gemini_react_agent(system_prompt)
+    config = {""configurable"": {""thread_id"": thread_id}}
+    try:
+        response = agent.invoke(
+            {""messages"": [{""role"": ""user"", ""content"": query}]},
+            config
+        )
+        
+        print(response)
+        last_assistant_message = None
+        for msg in reversed(response[""messages""]):
+            if hasattr(msg, ""role"") and msg.role == ""assistant"":
+                last_assistant_message = msg.content
+                break
+        
+        if last_assistant_message:
+            return last_assistant_message
+        else:
+            return ""No assistant response found in the reply.""
+    
+    except Exception as e:
+        return f""Error generating response: {str(e)}""
+
+### Error Message and Stack Trace (if applicable)
+
+---------------------------------------------------------------------------
+TypeError                                 Traceback (most recent call last)
+Cell In[111], [line 1](vscode-notebook-cell:?execution_count=111&line=1)
+----> [1](vscode-notebook-cell:?execution_count=111&line=1) run_gemini_ner_rag_demo(system_prompt)
+
+Cell In[102], [line 10](vscode-notebook-cell:?execution_count=102&line=10)
+      [7](vscode-notebook-cell:?execution_count=102&line=7)     break
+      [9](vscode-notebook-cell:?execution_count=102&line=9) print(f""Query: {query}\n"")
+---> [10](vscode-notebook-cell:?execution_count=102&line=10) answer = generate_answer_with_gemini(system_prompt, query, thread_id)
+     [11](vscode-notebook-cell:?execution_count=102&line=11) print(f""Answer: {answer}\n"")
+
+Cell In[110], [line 5](vscode-notebook-cell:?execution_count=110&line=5)
+      [2](vscode-notebook-cell:?execution_count=110&line=2) if not query or len(query.strip()) == 0:
+      [3](vscode-notebook-cell:?execution_count=110&line=3)     return ""Please provide a valid question or request.""
+----> [5](vscode-notebook-cell:?execution_count=110&line=5) agent = create_gemini_react_agent(system_prompt)
+      [6](vscode-notebook-cell:?execution_count=110&line=6) config = {""configurable"": {""thread_id"": thread_id}}
+      [7](vscode-notebook-cell:?execution_count=110&line=7) try:
+      [8](vscode-notebook-cell:?execution_count=110&line=8)   
+
+Cell In[109], [line 4](vscode-notebook-cell:?execution_count=109&line=4)
+      [2](vscode-notebook-cell:?execution_count=109&line=2) llm = init_llm()
+      [3](vscode-notebook-cell:?execution_count=109&line=3) system_prompt = system_prompt
+----> [4](vscode-notebook-cell:?execution_count=109&line=4) agent = create_react_agent(
+      [5](vscode-notebook-cell:?execution_count=109&line=5)     llm.bind_tools(tools),
+      [6](vscode-notebook-cell:?execution_count=109&line=6)     tools=tools,
+      [7](vscode-notebook-cell:?execution_count=109&line=7)     prompt=system_prompt,
+      [8](vscode-notebook-cell:?execution_count=109&line=8)     checkpointer=checkpointer
+      [9](vscode-notebook-cell:?execution_count=109&line=9) )
+     [11](vscode-notebook-cell:?execution_count=109&line=11) return agent
+
+
+File .... Lib\site-packages\langgraph\_api\deprecation.py:80, in deprecated_parameter.<locals>.decorator.<locals>.wrapper(*args, **kwargs)
+     [72](file:///C:/Users/Fiqih/AppData/Local/Programs/Python/Python311/Lib/site-packages/langgraph/_api/deprecation.py:72) if arg_name in kwargs:
+     [73](file:///C:/Users/Fiqih/AppData/Local/Programs/Python/Python311/Lib/site-packages/langgraph/_api/deprecation.py:73)     warnings.warn(
+     [74](file:///C:/Users/Fiqih/AppData/Local/Programs/Python/Python311/Lib/site-packages/langgraph/_api/deprecation.py:74)         f""Parameter '{arg_name}' in function '{func.__name__}' is ""
+     [75](file:///C:/Users/Fiqih/AppData/Local/Programs/Python/Python311/Lib/site-packages/langgraph/_api/deprecation.py:75)         f""deprecated as of version {since} and will be removed in version {removal}. ""
+   (...)
+     [78](file:///C:/Users/Fiqih/AppData/Local/Programs/Python/Python311/Lib/site-packages/langgraph/_api/deprecation.py:78)         stacklevel=2,
+     [79](file:///C:/Users/Fiqih/AppData/Local/Programs/Python/Python311/Lib/site-packages/langgraph/_api/deprecation.py:79)     )
+---> [80](file:///C:/Users/Fiqih/AppData/Local/Programs/Python/Python311/Lib/site-packages/langgraph/_api/deprecation.py:80) return func(*args, **kwargs)
+
+TypeError: create_react_agent() got an unexpected keyword argument 'prompt'
+
+### Description
+
+I do not understand with this error since i use the tutorial from Langchain and Langgraph. The prompt can't be passed to parameter prompt but it can be passed to parameter state_modifier which is based on my exploration that  parameter had already depreciated
+
+### System Info
+
+System Information
+------------------
+> OS:  Windows
+> OS Version:  10.0.26100
+> Python Version:  3.11.5 (tags/v3.11.5:cce6ba9, Aug 24 2023, 14:38:34) [MSC v.1936 64 bit (AMD64)]
+
+Package Information
+-------------------
+> langchain_core: 0.3.59
+> langchain: 0.3.25
+> langchain_community: 0.3.3
+> langsmith: 0.1.135
+> langchain_experimental: 0.3.2
+> langchain_google_genai: 2.0.11
+> langchain_groq: 0.2.0
+> langchain_mongodb: 0.1.7
+> langchain_ollama: 0.2.0
+> langchain_openai: 0.2.3
+> langchain_postgres: 0.0.12
+> langchain_qdrant: 0.2.0
+> langchain_text_splitters: 0.3.8
+> langgraph_sdk: 0.1.69
+
+Optional packages not installed
+-------------------------------
+> langserve
+
+Other Dependencies
+------------------
+> aiohttp: 3.9.5
+> async-timeout<5.0.0,>=4.0.0;: Installed. No version info available.
+> dataclasses-json: 0.6.7
+> fastembed: Installed. No version info available.
+> filetype: 1.2.0
+> google-ai-generativelanguage: 0.6.16
+> groq: 0.11.0
+> httpx: 0.28.1
+> jsonpatch<2.0,>=1.33: Installed. No version info available.
+> langchain-anthropic;: Installed. No version info available.
+> langchain-aws;: Installed. No version info available.
+> langchain-azure-ai;: Installed. No version info available.
+> langchain-cohere;: Installed. No version info available.
+> langchain-community;: Installed. No version info available.
+> langchain-core<1.0.0,>=0.3.51: Installed. No version info available.
+> langchain-core<1.0.0,>=0.3.58: Installed. No version info available.
+> langchain-deepseek;: Installed. No version info available.
+> langchain-fireworks;: Installed. No version info available.
+> langchain-google-genai;: Installed. No version info available.
+> langchain-google-vertexai;: Installed. No version info available.
+> langchain-groq;: Installed. No version info available.
+> langchain-huggingface;: Installed. No version info available.
+> langchain-mistralai;: Installed. No version info available.
+> langchain-ollama;: Installed. No version info available.
+> langchain-openai;: Installed. No version info available.
+> langchain-perplexity;: Installed. No version info available.
+> langchain-text-splitters<1.0.0,>=0.3.8: Installed. No version info available.
+> langchain-together;: Installed. No version info available.
+> langchain-xai;: Installed. No version info available.
+> langsmith<0.4,>=0.1.125: Installed. No version info available.
+> langsmith<0.4,>=0.1.17: Installed. No version info available.
+> numpy: 1.26.4
+> ollama: 0.3.3
+> openai: 1.55.3
+> orjson: 3.10.3
+> packaging<25,>=23.2: Installed. No version info available.
+> pgvector: 0.2.5
+> psycopg: 3.2.4
+> psycopg-pool: 3.2.4
+> pydantic: 2.11.4
+> pydantic-settings: 2.5.2
+> pydantic<3.0.0,>=2.5.2;: Installed. No version info available.
+> pydantic<3.0.0,>=2.7.4: Installed. No version info available.
+> pydantic<3.0.0,>=2.7.4;: Installed. No version info available.
+> pymongo: 4.8.0
+> PyYAML: 6.0.2
+> PyYAML>=5.3: Installed. No version info available.
+> qdrant-client: 1.12.1
+> requests: 2.32.3
+> requests-toolbelt: 1.0.0
+> requests<3,>=2: Installed. No version info available.
+> sqlalchemy: 2.0.31
+> SQLAlchemy: 2.0.31
+> SQLAlchemy<3,>=1.4: Installed. No version info available.
+> tenacity: 8.4.2
+> tenacity!=8.4.0,<10.0.0,>=8.1.0: Installed. No version info available.
+> tiktoken: 0.7.0
+> typing-extensions>=4.7: Installed. No version info available.",,2025-05-16T05:03:02Z,2,open
+31227,https://github.com/langchain-ai/langchain/issues/31227,"OpenAIEmbeddings does not respect token limits, causes 400 BadRequest","### Checked other resources
+
+- [x] I added a very descriptive title to this issue.
+- [x] I used the GitHub search to find a similar question and didn't find it.
+- [x] I am sure that this is a bug in LangChain rather than my code.
+- [x] The bug is not resolved by updating to the latest stable version of LangChain (or the specific integration package).
+- [x] I posted a self-contained, minimal, reproducible example. A maintainer can copy it and run it AS IS.
+
+### Example Code
+
+The following code:
+``` python
+import chromadb
+import requests
+from langchain_chroma import Chroma
+from langchain_core.documents import Document
+from langchain_openai import OpenAIEmbeddings
+from langchain_text_splitters import CharacterTextSplitter
+from copilot.core.vectordb_utils import get_chroma_settings
+
+db_path = ""./myexampledb""
+chroma_client = chromadb.Client(settings=get_chroma_settings(db_path))
+
+# Download and concatenate multiple large texts from Project Gutenberg
+urls = [
+    ""https://www.gutenberg.org/files/1342/1342-0.txt"",
+    ""https://www.gutenberg.org/cache/epub/84/pg84.txt"",
+    ""https://www.gutenberg.org/cache/epub/2701/pg2701.txt"",
+    ""https://www.gutenberg.org/cache/epub/1513/pg1513.txt"",
+    ""https://www.gutenberg.org/cache/epub/11/pg11.txt""
+]
+long_text = """"
+for url in urls:
+    response = requests.get(url)
+    if response.status_code == 200:
+        long_text += response.text
+
+document = Document(page_content=long_text)
+splitted_texts = CharacterTextSplitter(
+    separator=""\n\n"",
+    chunk_size=1000,
+    chunk_overlap=200,
+    length_function=len,
+).split_documents([document])
+
+# This line causes the token limit error
+Chroma.from_documents(
+    splitted_texts,
+    OpenAIEmbeddings(disallowed_special=(), show_progress_bar=True),
+    persist_directory=db_path,
+    client_settings=get_chroma_settings(),
+)
+```
+
+### Error Message and Stack Trace (if applicable)
+
+Traceback (most recent call last):
+  File ""/Users/futit/Applications/PyCharm Community Edition.app/Contents/plugins/python-ce/helpers/pydev/pydevd.py"", line 1570, in _exec
+    pydev_imports.execfile(file, globals, locals)  # execute the script
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/futit/Applications/PyCharm Community Edition.app/Contents/plugins/python-ce/helpers/pydev/_pydev_imps/_pydev_execfile.py"", line 18, in execfile
+    exec(compile(contents+""\n"", file, 'exec'), glob, loc)
+  File ""/Users/futit/Workspace/etendo_develop/modules/com.etendoerp.copilot/examples/indexing.py"", line 49, in <module>
+    Chroma.from_documents(
+  File ""/Users/futit/Workspace/etendo_develop/modules/com.etendoerp.copilot/.venv/lib/python3.12/site-packages/langchain_chroma/vectorstores.py"", line 1234, in from_documents
+    return cls.from_texts(
+           ^^^^^^^^^^^^^^^
+  File ""/Users/futit/Workspace/etendo_develop/modules/com.etendoerp.copilot/.venv/lib/python3.12/site-packages/langchain_chroma/vectorstores.py"", line 1187, in from_texts
+    chroma_collection.add_texts(
+  File ""/Users/futit/Workspace/etendo_develop/modules/com.etendoerp.copilot/.venv/lib/python3.12/site-packages/langchain_chroma/vectorstores.py"", line 527, in add_texts
+    embeddings = self._embedding_function.embed_documents(texts)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/futit/Workspace/etendo_develop/modules/com.etendoerp.copilot/.venv/lib/python3.12/site-packages/langchain_openai/embeddings/base.py"", line 575, in embed_documents
+    return self._get_len_safe_embeddings(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/futit/Workspace/etendo_develop/modules/com.etendoerp.copilot/.venv/lib/python3.12/site-packages/langchain_openai/embeddings/base.py"", line 471, in _get_len_safe_embeddings
+    response = self.client.create(
+               ^^^^^^^^^^^^^^^^^^^
+  File ""/Users/futit/Workspace/etendo_develop/modules/com.etendoerp.copilot/.venv/lib/python3.12/site-packages/openai/resources/embeddings.py"", line 128, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File ""/Users/futit/Workspace/etendo_develop/modules/com.etendoerp.copilot/.venv/lib/python3.12/site-packages/openai/_base_client.py"", line 1276, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/futit/Workspace/etendo_develop/modules/com.etendoerp.copilot/.venv/lib/python3.12/site-packages/openai/_base_client.py"", line 949, in request
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File ""/Users/futit/Workspace/etendo_develop/modules/com.etendoerp.copilot/.venv/lib/python3.12/site-packages/openai/_base_client.py"", line 1057, in _request
+    raise self._make_status_error_from_response(err.response) from None
+openai.BadRequestError: Error code: 400 - {'error': {'message': 'Requested 673477 tokens, max 300000 tokens per request', 'type': 'max_tokens_per_request', 'param': None, 'code': 'max_tokens_per_request'}}
+
+### Description
+
+I’m encountering a problem when using OpenAIEmbeddings from langchain-openai==0.3.16 in conjunction with Chroma.from_documents. The embedding call fails with the following error:
+`openai.BadRequestError: Error code: 400 - {'error': {'message': 'Requested 673477 tokens, max 300000 tokens per request', 'type': 'max_tokens_per_request', 'param': None, 'code': 'max_tokens_per_request'}}`
+
+This suggests that the OpenAIEmbeddings class is not automatically batching or chunking documents to comply with the OpenAI API’s max_tokens_per_request limit.
+
+
+Expected behavior:
+The embedding class should internally batch requests so they don’t exceed OpenAI’s max tokens per request limit (currently 300,000 tokens).
+
+
+
+### System Info
+
+python -m langchain_core.sys_info
+
+
+
+System Information
+------------------
+> OS:  Darwin
+> OS Version:  Darwin Kernel Version 24.4.0: Fri Apr 11 18:33:47 PDT 2025; root:xnu-11417.101.15~117/RELEASE_ARM64_T6000
+> Python Version:  3.12.0 (v3.12.0:0fb18b02c8, Oct  2 2023, 09:45:56) [Clang 13.0.0 (clang-1300.0.29.30)]
+
+Package Information
+-------------------
+> langchain_core: 0.3.59
+> langchain: 0.3.23
+> langchain_community: 0.3.21
+> langsmith: 0.3.32
+> langchain_anthropic: 0.3.12
+> langchain_chroma: 0.2.3
+> langchain_deepseek: 0.1.3
+> langchain_experimental: 0.3.4
+> langchain_google_genai: 2.1.3
+> langchain_ollama: 0.3.2
+> langchain_openai: 0.3.16
+> langchain_sandbox: 0.0.4
+> langchain_text_splitters: 0.3.8
+> langgraph_codeact: 0.1.2
+> langgraph_sdk: 0.1.61
+> langgraph_supervisor: 0.0.16
+
+Optional packages not installed
+-------------------------------
+> langserve
+
+Other Dependencies
+------------------
+> aiohttp<4.0.0,>=3.8.3: Installed. No version info available.
+> anthropic<1,>=0.49.0: Installed. No version info available.
+> async-timeout<5.0.0,>=4.0.0;: Installed. No version info available.
+> chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0: Installed. No version info available.
+> dataclasses-json<0.7,>=0.5.7: Installed. No version info available.
+> filetype: 1.2.0
+> google-ai-generativelanguage: 0.6.17
+> httpx: 0.27.2
+> httpx-sse<1.0.0,>=0.4.0: Installed. No version info available.
+> jsonpatch<2.0,>=1.33: Installed. No version info available.
+> langchain-anthropic;: Installed. No version info available.
+> langchain-aws;: Installed. No version info available.
+> langchain-azure-ai;: Installed. No version info available.
+> langchain-cohere;: Installed. No version info available.
+> langchain-community;: Installed. No version info available.
+> langchain-core<0.4.0,>=0.3.40: Installed. No version info available.
+> langchain-core<0.4.0,>=0.3.56: Installed. No version info available.
+> langchain-core<1.0.0,>=0.3.47: Installed. No version info available.
+> langchain-core<1.0.0,>=0.3.51: Installed. No version info available.
+> langchain-core<1.0.0,>=0.3.52: Installed. No version info available.
+> langchain-core<1.0.0,>=0.3.53: Installed. No version info available.
+> langchain-core<1.0.0,>=0.3.58: Installed. No version info available.
+> langchain-core>=0.3.52: Installed. No version info available.
+> langchain-deepseek;: Installed. No version info available.
+> langchain-fireworks;: Installed. No version info available.
+> langchain-google-genai;: Installed. No version info available.
+> langchain-google-vertexai;: Installed. No version info available.
+> langchain-groq;: Installed. No version info available.
+> langchain-huggingface;: Installed. No version info available.
+> langchain-mistralai;: Installed. No version info available.
+> langchain-ollama;: Installed. No version info available.
+> langchain-openai;: Installed. No version info available.
+> langchain-openai<1.0.0,>=0.3.9: Installed. No version info available.
+> langchain-perplexity;: Installed. No version info available.
+> langchain-text-splitters<1.0.0,>=0.3.8: Installed. No version info available.
+> langchain-together;: Installed. No version info available.
+> langchain-xai;: Installed. No version info available.
+> langchain<1.0.0,>=0.3.23: Installed. No version info available.
+> langgraph-prebuilt<0.2.0,>=0.1.7: Installed. No version info available.
+> langgraph<0.4.0,>=0.3.5: Installed. No version info available.
+> langsmith-pyo3: Installed. No version info available.
+> langsmith<0.4,>=0.1.125: Installed. No version info available.
+> langsmith<0.4,>=0.1.17: Installed. No version info available.
+> numpy<3,>=1.26.2: Installed. No version info available.
+> numpy>=1.26.0;: Installed. No version info available.
+> numpy>=2.1.0;: Installed. No version info available.
+> ollama<1,>=0.4.4: Installed. No version info available.
+> openai-agents: Installed. No version info available.
+> openai<2.0.0,>=1.68.2: Installed. No version info available.
+> opentelemetry-api: 1.32.1
+> opentelemetry-exporter-otlp-proto-http: Installed. No version info available.
+> opentelemetry-sdk: 1.32.1
+> orjson: 3.10.16
+> packaging: 24.2
+> packaging<25,>=23.2: Installed. No version info available.
+> pydantic: 2.11.3
+> pydantic-settings<3.0.0,>=2.4.0: Installed. No version info available.
+> pydantic<3.0.0,>=2.5.2;: Installed. No version info available.
+> pydantic<3.0.0,>=2.7.4: Installed. No version info available.
+> pydantic<3.0.0,>=2.7.4;: Installed. No version info available.
+> pytest: 7.4.4
+> PyYAML>=5.3: Installed. No version info available.
+> requests: 2.32.3
+> requests-toolbelt: 1.0.0
+> requests<3,>=2: Installed. No version info available.
+> rich: 14.0.0
+> SQLAlchemy<3,>=1.4: Installed. No version info available.
+> tenacity!=8.4.0,<10,>=8.1.0: Installed. No version info available.
+> tenacity!=8.4.0,<10.0.0,>=8.1.0: Installed. No version info available.
+> tiktoken<1,>=0.7: Installed. No version info available.
+> typing-extensions>=4.7: Installed. No version info available.
+> zstandard: 0.23.0
+
+
+pip freeze
+aiofiles==24.1.0
+aiohappyeyeballs==2.6.1
+aiohttp==3.11.16
+aiosignal==1.3.2
+aiosqlite==0.21.0
+annotated-types==0.7.0
+anthropic==0.49.0
+anyio==4.9.0
+asgiref==3.8.1
+astroid==3.3.9
+asttokens==3.0.0
+attrs==25.3.0
+Authlib==1.5.2
+backoff==2.2.1
+bcrypt==4.3.0
+black==25.1.0
+build==1.2.2.post1
+bz2file==0.98
+CacheControl==0.14.2
+cachetools==5.5.2
+certifi==2025.1.31
+cffi==1.17.1
+cfgv==3.4.0
+chardet==5.2.0
+charset-normalizer==3.4.1
+chroma-hnswlib==0.7.6
+chromadb==0.6.3
+cleo==2.1.0
+click==8.1.8
+click-completion==0.5.2
+colorama==0.4.6
+coloredlogs==15.0.1
+coverage==7.8.0
+crashtest==0.4.1
+crayons==0.4.0
+cryptography==44.0.3
+curlify==2.2.1
+dataclasses-json==0.6.7
+debugpy==1.8.14
+decorator==5.2.1
+Deprecated==1.2.18
+dill==0.4.0
+distlib==0.3.9
+distro==1.9.0
+docker==7.1.0
+docstring_parser==0.16
+dulwich==0.22.8
+durationpy==0.9
+dydantic==0.0.8
+et_xmlfile==2.0.0
+executing==2.2.0
+fastapi==0.115.12
+fastjsonschema==2.21.1
+filelock==3.18.0
+filetype==1.2.0
+findpython==0.6.3
+flatbuffers==25.2.10
+frontend==0.0.3
+frozenlist==1.5.0
+fsspec==2025.3.2
+google-adk==0.5.0
+google-ai-generativelanguage==0.6.17
+google-api-core==2.24.2
+google-api-python-client==2.169.0
+google-auth==2.39.0
+google-auth-httplib2==0.2.0
+google-cloud-aiplatform==1.92.0
+google-cloud-bigquery==3.31.0
+google-cloud-core==2.4.3
+google-cloud-resource-manager==1.14.2
+google-cloud-secret-manager==2.23.3
+google-cloud-speech==2.32.0
+google-cloud-storage==2.19.0
+google-cloud-trace==1.16.1
+google-crc32c==1.7.1
+google-genai==1.14.0
+google-resumable-media==2.7.2
+googleapis-common-protos==1.70.0
+grandalf==0.8
+graphviz==0.20.3
+grpc-google-iam-v1==0.14.2
+grpcio==1.71.0
+grpcio-status==1.71.0
+h11==0.14.0
+hf-xet==1.1.0
+httpcore==1.0.8
+httplib2==0.22.0
+httptools==0.6.4
+httpx==0.27.2
+httpx-sse==0.4.0
+huggingface-hub==0.30.2
+humanfriendly==10.0
+identify==2.6.9
+idna==3.10
+importlib_metadata==8.6.1
+importlib_resources==6.5.2
+iniconfig==2.1.0
+installer==0.7.0
+ipython==8.35.0
+isort==6.0.1
+itsdangerous==2.2.0
+jaraco.classes==3.4.0
+jaraco.context==6.0.1
+jaraco.functools==4.1.0
+jedi==0.19.2
+Jinja2==3.1.6
+jiter==0.9.0
+jsonpatch==1.33
+jsonpointer==3.0.0
+keyring==25.6.0
+kubernetes==32.0.1
+langchain==0.3.23
+langchain-anthropic==0.3.12
+langchain-chroma==0.2.3
+langchain-community==0.3.21
+langchain-core==0.3.59
+langchain-deepseek==0.1.3
+langchain-experimental==0.3.4
+langchain-google-genai==2.1.3
+langchain-ollama==0.3.2
+langchain-openai==0.3.16
+langchain-text-splitters==0.3.8
+langchain_sandbox==0.0.4
+langgraph==0.3.31
+langgraph-checkpoint==2.0.24
+langgraph-checkpoint-sqlite==2.0.6
+langgraph-codeact==0.1.2
+langgraph-prebuilt==0.1.8
+langgraph-sdk==0.1.61
+langgraph-supervisor==0.0.16
+langmem==0.0.21
+langsmith==0.3.32
+markdown-it-py==3.0.0
+MarkupSafe==3.0.2
+marshmallow==3.26.1
+matplotlib-inline==0.1.7
+mccabe==0.7.0
+mcp==1.8.0
+mdurl==0.1.2
+mmh3==5.1.0
+monotonic==1.6
+more-itertools==10.6.0
+mpmath==1.3.0
+msgpack==1.1.0
+multidict==6.4.3
+mypy-extensions==1.0.0
+nest-asyncio==1.6.0
+nodeenv==1.9.1
+numpy==2.2.4
+oauthlib==3.2.2
+ollama==0.4.8
+onnxruntime==1.21.0
+openai==1.75.0
+openevals==0.0.20
+openpyxl==3.1.5
+opentelemetry-api==1.32.1
+opentelemetry-exporter-gcp-trace==1.9.0
+opentelemetry-exporter-otlp-proto-common==1.32.1
+opentelemetry-exporter-otlp-proto-grpc==1.32.1
+opentelemetry-instrumentation==0.53b1
+opentelemetry-instrumentation-asgi==0.53b1
+opentelemetry-instrumentation-fastapi==0.53b1
+opentelemetry-proto==1.32.1
+opentelemetry-resourcedetector-gcp==1.9.0a0
+opentelemetry-sdk==1.32.1
+opentelemetry-semantic-conventions==0.53b1
+opentelemetry-util-http==0.53b1
+orjson==3.10.16
+ormsgpack==1.9.1
+overrides==7.7.0
+packaging==24.2
+pandas==2.2.3
+parso==0.8.4
+pathspec==0.12.1
+pbs-installer==2025.4.9
+pexpect==4.9.0
+pillow==11.1.0
+pkginfo==1.12.1.2
+platformdirs==4.3.7
+pluggy==1.5.0
+poetry==2.1.2
+poetry-core==2.1.2
+poetry-plugin-export==1.9.0
+posthog==3.25.0
+pre_commit==4.2.0
+prompt_toolkit==3.0.51
+propcache==0.3.1
+proto-plus==1.26.1
+protobuf==5.29.4
+ptyprocess==0.7.0
+pure_eval==0.2.3
+pyasn1==0.6.1
+pyasn1_modules==0.4.2
+pycountry==24.6.1
+pycparser==2.22
+pycycle==0.0.8
+pydantic==2.11.3
+pydantic-settings==2.8.1
+pydantic_core==2.33.1
+pyfiglet==1.0.2
+Pygments==2.19.1
+pylint==3.3.6
+PyMuPDF==1.25.5
+pyparsing==3.2.3
+pypdfium2==4.30.1
+PyPika==0.48.9
+pyproject-api==1.9.0
+pyproject_hooks==1.2.0
+pytest==7.4.4
+pytest-asyncio==0.23.8
+pytest-cov==5.0.0
+pytest-lazy-fixture==0.6.3
+pytest-mock==3.14.0
+python-dateutil==2.9.0.post0
+python-dotenv==1.1.0
+python-multipart==0.0.20
+pytz==2025.2
+PyYAML==6.0.2
+pyzbar==0.1.9
+RapidFuzz==3.13.0
+rarfile==4.2
+regex==2024.11.6
+requests==2.32.3
+requests-mock==1.12.1
+requests-oauthlib==2.0.0
+requests-toolbelt==1.0.0
+resend==2.6.0
+RestrictedPython==8.0
+rich==14.0.0
+rizaio==0.10.0
+rsa==4.9.1
+setuptools==78.1.0
+shapely==2.1.0
+shellingham==1.5.4
+six==1.17.0
+sniffio==1.3.1
+SQLAlchemy==2.0.40
+sse-starlette==2.3.4
+stack-data==0.6.3
+starlette==0.46.2
+sympy==1.13.3
+tenacity==9.1.2
+tiktoken==0.9.0
+tokenizers==0.21.1
+toml==0.10.2
+tomli==2.2.1
+tomlkit==0.13.2
+tox==4.25.0
+tqdm==4.67.1
+traitlets==5.14.3
+trove-classifiers==2025.4.11.15
+trustcall==0.0.39
+typer==0.15.2
+typing-inspect==0.9.0
+typing-inspection==0.4.0
+typing_extensions==4.13.2
+tzdata==2025.2
+tzlocal==5.3.1
+uritemplate==4.1.1
+urllib3==2.4.0
+uvicorn==0.34.1
+uvloop==0.21.0
+virtualenv==20.30.0
+watchfiles==1.0.5
+wcwidth==0.2.13
+websocket-client==1.8.0
+websockets==15.0.1
+wrapt==1.17.2
+xattr==1.1.4
+xxhash==3.5.0
+yarl==1.20.0
+zipp==3.21.0
+zstandard==0.23.0","🤖:bug, investigate",2025-05-14T09:07:13Z,2,open
+31208,https://github.com/langchain-ai/langchain/issues/31208,Error code: 400 & 'message': 'messages.1.content.1.tool_use.index: Extra inputs are not permitted',"### Checked other resources
+
+- [x] I added a very descriptive title to this issue.
+- [x] I used the GitHub search to find a similar question and didn't find it.
+- [x] I am sure that this is a bug in LangChain rather than my code.
+- [x] The bug is not resolved by updating to the latest stable version of LangChain (or the specific integration package).
+- [x] I posted a self-contained, minimal, reproducible example. A maintainer can copy it and run it AS IS.
+
+### Example Code
+
+async for item in agent.astream({""messages"": formatted_messages}, stream_mode=""messages"", debug=agent_debug):
+.
+.
+.
+.
+Below is the code...
+
+### Error Message and Stack Trace (if applicable)
+
+2025-05-13 20:04:14,033 - httpx - Information - HTTP request: POST https://api.anthropic.com/v1/messages ""HTTP/1.1 400 Bad Request""
+2025-05-13 20:04:14,037 - core.agent - Warning - Anthropic model error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'messages.1.content.1.tool_use.index: Additional input is not allowed'}}
+
+
+### Description
+
+AIMessage(content=[{'text': '# Request to retrieve a list of Horizon servers\n\nRetrieves a list of Horizon servers available on a VDI system, based on the request.\n\n## What to do:\n1. Run `Horizon-FindAvailableHorizonServerNames` to identify all accessible Horizon server names.', 'type': 'text', 'index': 0}, {'id': 'toolu_01NnFVbFHNkjqh5zUHc7poiMtoolu_01NnFVbFHNkjqh5zUHc7poiM', 'input': {}, 'name': 'Horizon-FindAvailableHorizonServerNames', 'type': 'tool_use', 'index': 1, 'partial_json': ''}], additional_kwargs={}, response_metadata={'model_name': 'claude-3-7-sonnet-latest', 'stop_reason': 'tool_use', 'stop_sequence': none}, id='run--b5e3f1a2-1749-46b0-81ed-46ef1c86c2aa', tool_calls=[{'name': 'Horizon-FindAvailableHorizonServerNames', 'args': {}, 'id': 'toolu_01NnFVbFHNkjqh5zUHc7poiM', 'type': 'tool_call'}], usage_metadata={'input_tokens': 10793, 'output_tokens': 189, 'total_tokens': 10982, 'input_token_details': {'cache_creation': 0, 'cache_read': 0}}),
+
+
+messages.1.content.1.tool_use.index <-- It says it is not allowed, but it seems to be added like 'type': 'tool_use', 'index': 1, so it seems to be causing an error. I don't know why.
+
+The error does not occur when calling the OpenAI API, but only occurs when calling the Anthropic API.
+
+### System Info
+
+anthropic              0.51.0
+langchain-anthropic    0.3.13
+langchain-core         0.3.59
+langchain-mcp-adapters 0.0.10
+langchain-openai       0.3.14
+langgraph              0.3.31
+langgraph-checkpoint   2.0.24
+langgraph-prebuilt     0.1.8
+langgraph-sdk          0.1.63
+langsmith              0.3.33","🤖:bug, investigate",2025-05-13T11:14:09Z,3,open
+31192,https://github.com/langchain-ai/langchain/issues/31192,LLMListwiseRerank will fail with IndexError on empty list of documents,"### Checked other resources
+
+- [x] I added a very descriptive title to this issue.
+- [x] I used the GitHub search to find a similar question and didn't find it.
+- [x] I am sure that this is a bug in LangChain rather than my code.
+- [x] The bug is not resolved by updating to the latest stable version of LangChain (or the specific integration package).
+- [x] I posted a self-contained, minimal, reproducible example. A maintainer can copy it and run it AS IS.
+
+### Example Code
+
+```python
+from langchain.retrievers.document_compressors import LLMListwiseRerank
+from langchain_openai import ChatOpenAI
+
+rerank = LLMListwiseRerank.from_llm(ChatOpenAI(model=""gpt-4o-mini""), top_n=40)
+result = rerank.compress_documents([], 'test query')
+assert len(result) == 0
+```
+
+
+### Error Message and Stack Trace (if applicable)
+
+```
+IndexError: list index out of range
+tests/test_retriever.py:166: in test_empty_documents_on_reranking
+    result = rerank.compress_documents([], question)
+.venv/lib/python3.9/site-packages/langchain/retrievers/document_compressors/listwise_rerank.py:91: in compress_documents
+    results = self.reranker.invoke(
+.venv/lib/python3.9/site-packages/langchain_core/runnables/base.py:3034: in invoke
+    input = context.run(step.invoke, input, config)
+.venv/lib/python3.9/site-packages/langchain_core/runnables/base.py:4757: in invoke
+    return self._call_with_config(
+.venv/lib/python3.9/site-packages/langchain_core/runnables/base.py:1930: in _call_with_config
+    context.run(
+.venv/lib/python3.9/site-packages/langchain_core/runnables/config.py:428: in call_func_with_variable_args
+    return func(input, **kwargs)  # type: ignore[call-arg]
+.venv/lib/python3.9/site-packages/langchain_core/runnables/base.py:4615: in _invoke
+    output = call_func_with_variable_args(
+.venv/lib/python3.9/site-packages/langchain_core/runnables/config.py:428: in call_func_with_variable_args
+    return func(input, **kwargs)  # type: ignore[call-arg]
+.venv/lib/python3.9/site-packages/langchain/retrievers/document_compressors/listwise_rerank.py:34: in _parse_ranking
+    return [docs[i] for i in ranking.ranked_document_ids]
+.venv/lib/python3.9/site-packages/langchain/retrievers/document_compressors/listwise_rerank.py:34: in <listcomp>
+    return [docs[i] for i in ranking.ranked_document_ids]
+E   IndexError: list index out of range
+```
+
+### Description
+
+I want to use LLMListwiseRerank within compression retriever, like this:
+
+```python
+        # filter the retrieved documents with LLM and rerank them
+        self._filter = DocumentCompressorPipeline(
+            transformers=[
+                LLMChainFilter.from_llm(self.filtering_llm),
+                LLMListwiseRerank.from_llm(self.ranking_llm, top_n=40),
+            ]
+        )
+        self.contextual_retriever = ContextualCompressionRetriever(
+            base_compressor=self._filter,
+            base_retriever=self.multi_query_retriever,
+        )
+```
+
+All works good until the user query doesn't fit the knowledge base and `LLMChainFilter` filter out all documents, so `LLMListwiseRerank` receives empty document list to rerank and then it fails with `IndexError` exception.
+
+### System Info
+
+```
+
+System Information
+------------------
+> OS:  Linux
+> OS Version:  #1 SMP Thu Feb 27 20:22:48 UTC 2020
+> Python Version:  3.9.6 (default, Feb 28 2022, 11:53:11) 
+[GCC 7.3.1 20180712 (Red Hat 7.3.1-9)]
+
+Package Information
+-------------------
+> langchain_core: 0.3.59
+> langchain: 0.3.25
+> langchain_community: 0.3.21
+> langsmith: 0.3.30
+> langchain_openai: 0.2.0
+> langchain_postgres: 0.0.12
+> langchain_text_splitters: 0.3.8
+> langgraph_sdk: 0.1.61
+
+Optional packages not installed
+-------------------------------
+> langserve
+
+Other Dependencies
+------------------
+> aiohttp<4.0.0,>=3.8.3: Installed. No version info available.
+> async-timeout<5.0.0,>=4.0.0;: Installed. No version info available.
+> dataclasses-json<0.7,>=0.5.7: Installed. No version info available.
+> httpx: 0.28.1
+> httpx-sse<1.0.0,>=0.4.0: Installed. No version info available.
+> jsonpatch<2.0,>=1.33: Installed. No version info available.
+> langchain-anthropic;: Installed. No version info available.
+> langchain-aws;: Installed. No version info available.
+> langchain-azure-ai;: Installed. No version info available.
+> langchain-cohere;: Installed. No version info available.
+> langchain-community;: Installed. No version info available.
+> langchain-core<1.0.0,>=0.3.51: Installed. No version info available.
+> langchain-core<1.0.0,>=0.3.58: Installed. No version info available.
+> langchain-deepseek;: Installed. No version info available.
+> langchain-fireworks;: Installed. No version info available.
+> langchain-google-genai;: Installed. No version info available.
+> langchain-google-vertexai;: Installed. No version info available.
+> langchain-groq;: Installed. No version info available.
+> langchain-huggingface;: Installed. No version info available.
+> langchain-mistralai;: Installed. No version info available.
+> langchain-ollama;: Installed. No version info available.
+> langchain-openai;: Installed. No version info available.
+> langchain-perplexity;: Installed. No version info available.
+> langchain-text-splitters<1.0.0,>=0.3.8: Installed. No version info available.
+> langchain-together;: Installed. No version info available.
+> langchain-xai;: Installed. No version info available.
+> langchain<1.0.0,>=0.3.23: Installed. No version info available.
+> langsmith-pyo3: Installed. No version info available.
+> langsmith<0.4,>=0.1.125: Installed. No version info available.
+> langsmith<0.4,>=0.1.17: Installed. No version info available.
+> numpy: 1.26.4
+> numpy<3,>=1.26.2: Installed. No version info available.
+> openai: 1.73.0
+> openai-agents: Installed. No version info available.
+> opentelemetry-api: Installed. No version info available.
+> opentelemetry-exporter-otlp-proto-http: Installed. No version info available.
+> opentelemetry-sdk: Installed. No version info available.
+> orjson: 3.10.16
+> packaging: 24.2
+> packaging<25,>=23.2: Installed. No version info available.
+> pgvector: 0.2.5
+> psycopg: 3.2.6
+> psycopg-pool: 3.2.6
+> pydantic: 2.11.3
+> pydantic-settings<3.0.0,>=2.4.0: Installed. No version info available.
+> pydantic<3.0.0,>=2.5.2;: Installed. No version info available.
+> pydantic<3.0.0,>=2.7.4: Installed. No version info available.
+> pydantic<3.0.0,>=2.7.4;: Installed. No version info available.
+> pytest: 8.2.2
+> PyYAML>=5.3: Installed. No version info available.
+> requests: 2.32.3
+> requests-toolbelt: 1.0.0
+> requests<3,>=2: Installed. No version info available.
+> rich: 13.9.4
+> sqlalchemy: 2.0.29
+> SQLAlchemy<3,>=1.4: Installed. No version info available.
+> tenacity!=8.4.0,<10,>=8.1.0: Installed. No version info available.
+> tenacity!=8.4.0,<10.0.0,>=8.1.0: Installed. No version info available.
+> tiktoken: 0.7.0
+> typing-extensions>=4.7: Installed. No version info available.
+> zstandard: 0.23.0
+```","🤖:bug, investigate",2025-05-12T10:58:49Z,1,open
+31191,https://github.com/langchain-ai/langchain/issues/31191,DOC: Pulling RAG Prompt fails if using EU endpoint,"### URL
+
+https://github.com/langchain-ai/langchain/blob/master/docs/docs/tutorials/rag.ipynb?short_path=a4601ce#L237
+
+### Checklist
+
+- [x] I added a very descriptive title to this issue.
+- [x] I included a link to the documentation page I am referring to (if applicable).
+
+### Issue with current documentation:
+
+The docs specify using `prompt = hub.pull(""rlm/rag-prompt"")` at https://github.com/langchain-ai/langchain/blob/master/docs/docs/tutorials/rag.ipynb?short_path=a4601ce#L237. If you've set the Langsmith Endpoint to an EU URL this fails, but `prompt = hub.pull(""rlm/rag-prompt"", api_url=""https://api.smith.langchain.com"")` works. 
+
+### Idea or request for content:
+
+Add a note that `prompt = hub.pull(""rlm/rag-prompt"", api_url=""https://api.smith.langchain.com"")` is required if you're not on the US endpoint.",🤖:docs,2025-05-12T09:46:30Z,2,open
+31190,https://github.com/langchain-ai/langchain/issues/31190,Getting a 403 (Forbidden) when using the Azure AI Search Retriever,"### Checked other resources
+
+- [x] I added a very descriptive title to this issue.
+- [x] I used the GitHub search to find a similar question and didn't find it.
+- [x] I am sure that this is a bug in LangChain rather than my code.
+- [x] The bug is not resolved by updating to the latest stable version of LangChain (or the specific integration package).
+- [x] I posted a self-contained, minimal, reproducible example. A maintainer can copy it and run it AS IS.
+
+### Example Code
+
+I'm getting a 403 error when executing the following code snippet
+
+```
+retriever = AzureAISearchRetriever(
+    service_name='https://xyz.search.windows.net',
+    api_version='2024-07-01',
+    content_key='content',
+    api_key='my_api_key',
+    top_k=10, index_name='index-name')
+```
+
+However the below code snippet works
+
+```
+retriever = AzureAISearchRetriever(
+    service_name='https://xyz.search.windows.net',
+    api_version='2024-07-01',
+    content_key='content',
+    azure_ad_token='xxx',
+    top_k=10, index_name='index-name')
+```
+
+### Error Message and Stack Trace (if applicable)
+
+File C:\RAG\naive\.venv\Lib\site-packages\langchain_community\retrievers\azure_ai_search.py:182, in AzureAISearchRetriever._search(self, query)
+    180 response = requests.get(search_url, headers=self._headers)
+    181 if response.status_code != 200:
+--> 182     raise Exception(f""Error in search request: {response}"")
+    184 return json.loads(response.text)[""value""]
+
+Exception: Error in search request: <Response [403]>
+
+### Description
+
+langchain AzureAISearchRetriever always expects azure_ad_token parameter be set even if you're not using it. Basically, my inference is that langchain always expects azure_ad_token parameter be set either in the call explicitly or in the environment config regardless of whether you are using it or not. In my case, I'm using api_key only so I don't want to set azure_ad_token
+
+Additionally, it was found that this issue happens only from langchain-community v0.3.22 onwards. This problem is not reproducible in versions 0.3.21 and earlier
+
+### System Info
+
+System Information
+------------------
+> OS:  Windows
+> OS Version:  10.0.26100
+> Python Version:  3.12.3 (tags/v3.12.3:f6650f9, Apr  9 2024, 14:05:25) [MSC v.1938 64 bit (AMD64)]
+
+Package Information
+-------------------
+> langchain_core: 0.3.59
+> langchain: 0.3.25
+> langchain_community: 0.3.22
+> langsmith: 0.3.42
+> langchain_ollama: 0.3.2
+> langchain_openai: 0.3.16
+> langchain_text_splitters: 0.3.8
+
+Optional packages not installed
+-------------------------------
+> langserve
+
+Other Dependencies
+------------------
+> aiohttp<4.0.0,>=3.8.3: Installed. No version info available.
+> async-timeout<5.0.0,>=4.0.0;: Installed. No version info available.
+> dataclasses-json<0.7,>=0.5.7: Installed. No version info available.
+> httpx: 0.28.1
+> httpx-sse<1.0.0,>=0.4.0: Installed. No version info available.
+> jsonpatch<2.0,>=1.33: Installed. No version info available.
+> langchain-anthropic;: Installed. No version info available.
+> langchain-aws;: Installed. No version info available.
+> langchain-azure-ai;: Installed. No version info available.
+> langchain-cohere;: Installed. No version info available.
+> langchain-community;: Installed. No version info available.
+> langchain-core<1.0.0,>=0.3.51: Installed. No version info available.
+> langchain-core<1.0.0,>=0.3.52: Installed. No version info available.
+> langchain-core<1.0.0,>=0.3.55: Installed. No version info available.
+> langchain-core<1.0.0,>=0.3.58: Installed. No version info available.
+> langchain-deepseek;: Installed. No version info available.
+> langchain-fireworks;: Installed. No version info available.
+> langchain-google-genai;: Installed. No version info available.
+> langchain-google-vertexai;: Installed. No version info available.
+> langchain-groq;: Installed. No version info available.
+> langchain-huggingface;: Installed. No version info available.
+> langchain-mistralai;: Installed. No version info available.
+> langchain-ollama;: Installed. No version info available.
+> langchain-openai;: Installed. No version info available.
+> langchain-perplexity;: Installed. No version info available.
+> langchain-text-splitters<1.0.0,>=0.3.8: Installed. No version info available.
+> langchain-together;: Installed. No version info available.
+> langchain-xai;: Installed. No version info available.
+> langchain<1.0.0,>=0.3.24: Installed. No version info available.
+> langsmith-pyo3: Installed. No version info available.
+> langsmith<0.4,>=0.1.125: Installed. No version info available.
+> langsmith<0.4,>=0.1.17: Installed. No version info available.
+> numpy>=1.26.2;: Installed. No version info available.
+> numpy>=2.1.0;: Installed. No version info available.
+> ollama<1,>=0.4.4: Installed. No version info available.
+> openai-agents: Installed. No version info available.
+> openai<2.0.0,>=1.68.2: Installed. No version info available.
+> opentelemetry-api: 1.33.0
+> opentelemetry-exporter-otlp-proto-http: Installed. No version info available.
+> opentelemetry-sdk: 1.33.0
+> orjson: 3.10.18
+> packaging: 24.2
+> packaging<25,>=23.2: Installed. No version info available.
+> pydantic: 2.11.4
+> pydantic-settings<3.0.0,>=2.4.0: Installed. No version info available.
+> pydantic<3.0.0,>=2.5.2;: Installed. No version info available.
+> pydantic<3.0.0,>=2.7.4: Installed. No version info available.
+> pydantic<3.0.0,>=2.7.4;: Installed. No version info available.
+> pytest: Installed. No version info available.
+> PyYAML>=5.3: Installed. No version info available.
+> requests: 2.32.3
+> requests-toolbelt: 1.0.0
+> requests<3,>=2: Installed. No version info available.
+> rich: 14.0.0
+> SQLAlchemy<3,>=1.4: Installed. No version info available.
+> tenacity!=8.4.0,<10,>=8.1.0: Installed. No version info available.
+> tenacity!=8.4.0,<10.0.0,>=8.1.0: Installed. No version info available.
+> tiktoken<1,>=0.7: Installed. No version info available.
+> typing-extensions>=4.7: Installed. No version info available.
+> zstandard: 0.23.0",,2025-05-12T07:13:44Z,0,open

@@ -172,11 +172,12 @@ def get_relevant_docs(question):
         return "No relevant documentation found."
 
 @traceable(run_type="chain")
-def triage_and_answer(issue_text: str) -> dict:
+def triage_and_answer(issue_text: str, issue_url: str) -> dict:
     """
     Main entry point for the triage and answer chain.
     Takes an issue text and returns a dictionary with all classifications and answer.
     """
+    
     # Get the issue type
     issue_type_result = run_issue_type_chain(issue_text)
     issue_type = issue_type_result["issue_type"]
@@ -195,6 +196,7 @@ def triage_and_answer(issue_text: str) -> dict:
     
     # Return all results as a dictionary
     return {
+        "issue_url": issue_url,
         "issue_type": issue_type,
         "severity": severity,
         "category": category,
@@ -208,10 +210,11 @@ if __name__ == "__main__":
     print("\n=== Processing 10 Examples ===")
     for idx, issue in test_issues.iterrows():
         print(f"\nProcessing Example {idx + 1}")
-        issue_text = f"Title: {issue['title']}\nDescription: {issue['description']}"
+        issue_text = f"Title: {issue['title']}\nDescription: {issue['description']}\nIssue URL: {issue['issue_url']}"
         
-        # Run the chain and print results
-        result = triage_and_answer(issue_text)
+        # Run the chain and print results, passing the URL
+        result = triage_and_answer(issue_text, issue['issue_url'])
+        print(f"Issue URL: {result['issue_url']}")
         print(f"Issue Type: {result['issue_type']}")
         print(f"Severity: {result['severity']}")
         print(f"Category: {result['category']}")
