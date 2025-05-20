@@ -7,6 +7,7 @@ from langchain.chains import LLMChain, SimpleSequentialChain, SequentialChain
 from langchain.memory import ConversationBufferMemory, ConversationBufferWindowMemory, ConversationTokenBufferMemory, ConversationSummaryBufferMemory
 from langchain.chains.router import MultiPromptChain
 from langchain.chains.router.llm_router import LLMRouterChain,RouterOutputParser
+from vectorize_docs import get_vector_db_retriever
 
 #ignore warnings
 warnings.filterwarnings('ignore')
@@ -83,8 +84,62 @@ severity_type_chain = LLMChain(
     output_key="severity_type"
 )
 
+###Create CategoryTypeChain
+category_type_prompt = ChatPromptTemplate.from_messages([
+    ("system", """You are a category classifier. Here are the category definitions:
+     - setup: Installation, configuration, or environment setup issues
+     - chains: Questions about LangChain chains, their creation, or usage
+     - agents: Questions about LangChain agents, their creation, or usage
+     - memory: Questions about memory components or state management
+     - retrieval: Questions about document loading, vector stores, or retrieval
+     - other: Any other category not listed above
+     
+     Task: Classify the issue into one of these categories based on the issue type and description.
+     Input: {issue_text}
+     Issue Type: {issue_type}
+     Return a single category label."""),
+    ("human", "Issue Type: {issue_type}\nIssue Description: {issue_text}")
+])
 
-"""
+category_type_chain = LLMChain(
+    llm=llm,
+    prompt=category_type_prompt,
+    output_key="category_type"
+)
+
+###Create RetrieverChain
+# Initialize the retriever
+retriever = get_vector_db_retriever()
+
+retriever_prompt = ChatPromptTemplate.from_messages([
+    ("system", """You are a support assistant. Use the provided documentation to answer the question.
+     If the documentation doesn't contain the answer, say "I don't have enough information to answer this question."
+     If there is documentation, provide the URL to the documentation at the end of your answer like "[Source: url_path]".
+     
+     Documentation:
+     {docs}
+     
+     Question: {question}
+     
+     Provide a clear, concise answer based on the documentation."""),
+    ("human", "{question}")
+])
+
+retriever_chain = LLMChain(
+    llm=llm,
+    prompt=retriever_prompt,
+    output_key="answer"
+)
+
+def get_relevant_docs(question):
+    """Get relevant documentation for a question."""
+    try:
+        docs = retriever.invoke(question)
+        return "\n\n".join([doc.page_content for doc in docs])
+    except Exception as e:
+        print(f"Error retrieving documents: {e}")
+        return "No relevant documentation found."
+
 def test_chains():
     # Get the first issue from the dataset
     test_issue = df.iloc[0]
@@ -110,9 +165,30 @@ def test_chains():
         severity = severity_result["severity_type"]
         print(f"Severity: {severity}")
         
+        # Then, get the category
+        print("\n3. Running Category Chain...")
+        category_result = category_type_chain.invoke({
+            "issue_text": issue_text,
+            "issue_type": issue_type
+        })
+        category = category_result["category_type"]
+        print(f"Category: {category}")
+        
+        # Get relevant docs and generate answer
+        print("\n4. Retrieving relevant documentation...")
+        docs = get_relevant_docs(issue_text)
+        print("\n5. Generating answer...")
+        answer_result = retriever_chain.invoke({
+            "question": issue_text,
+            "docs": docs
+        })
+        print(f"\nAnswer: {answer_result['answer']}")
+        
         print("\n=== Final Classification ===")
         print(f"Issue Type: {issue_type}")
         print(f"Severity: {severity}")
+        print(f"Category: {category}")
+        print(f"Answer: {answer_result['answer']}")
         
     except Exception as e:
         print(f"\nError occurred: {str(e)}")
@@ -120,4 +196,4 @@ def test_chains():
 if __name__ == "__main__":
     test_chains()
 
-"""
+
