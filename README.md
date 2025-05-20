@@ -11,6 +11,10 @@ The application processes support queries through a series of chains:
 4. **Documentation Retrieval**: Finds relevant documentation from LangChain docs
 5. **Response Generation**: Provides a helpful response with documentation links
 
+## Usage
+
+The application processes issues from a CSV file (`langchain_issues_dataset.csv`), which is pulled from the Github API. Each issue is analyzed and classified, with support questions receiving documentation-based responses.
+
 ## Setup
 
 1. Create a `.env` file with your API keys:
@@ -27,10 +31,6 @@ pip install -r requirements.txt
 ```bash
 python chains.py
 ```
-
-## Usage
-
-The application processes issues from a CSV file (`langchain_issues_dataset.csv`), which was pulled from the Github API. Each issue is analyzed and classified, with support questions receiving documentation-based responses.
 
 ## Project Structure
 
