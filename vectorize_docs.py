@@ -40,8 +40,8 @@ def get_vector_db_retriever():
             return vectorstore.as_retriever(
                 search_type="similarity_score_threshold",
                 search_kwargs={
-                    "k": 1,  # Number of documents to retrieve
-                    "score_threshold": 0.9  # Minimum similarity score
+                    "k": 4,  # Number of documents to retrieve
+                    "score_threshold": 0.5  # Minimum similarity score
                 }
             )
         except Exception as e:
@@ -114,8 +114,8 @@ def get_vector_db_retriever():
     return vectorstore.as_retriever(
         search_type="similarity_score_threshold",
         search_kwargs={
-            "k": 1,  # Number of documents to retrieve
-            "score_threshold": 0.9  # Minimum similarity score
+            "k": 4,  # Number of documents to retrieve
+            "score_threshold": 0.5  # Minimum similarity score
         }
     )
 

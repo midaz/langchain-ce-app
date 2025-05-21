@@ -194,15 +194,22 @@ def triage_and_answer(issue_text: str, issue_url: str) -> dict:
     category = category_result["category"]
     
     # Get relevant docs and generate answer
-    docs = get_relevant_docs(issue_text)
-    answer_result = run_retriever_chain(issue_text, docs)
+    try:
+        raw_docs = retriever.invoke(issue_text)
+        docs_text = "\n\n".join([doc.page_content for doc in raw_docs])
+    except Exception as e:
+        print(f"Error retrieving documents: {e}")
+        raw_docs = []
+        docs_text = "No relevant documentation found."
+    
+    answer_result = run_retriever_chain(issue_text, docs_text)
     
     # Return all results as a dictionary
     return {
-        "issue_url": issue_url,
         "issue_type": issue_type,
         "severity": severity,
         "category": category,
+        "retrieved_docs": raw_docs,  # Store the raw documents
         "answer": answer_result["answer"]
     }
 

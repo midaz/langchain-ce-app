@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 from langchain.output_parsers import PydanticOutputParser
 import os
 import sys
-from langsmith.evaluation import EvaluationResult, RunEvaluator
+from langsmith.evaluation import EvaluationResult, RunEvaluator, EvaluationResults
 
 # Read local .env file
 from dotenv import load_dotenv, find_dotenv
@@ -15,6 +15,11 @@ _ = load_dotenv(find_dotenv())
 class SimpleJudgeEvaluation(BaseModel):
     score: float = Field(description="Overall score from 0-1")
     explanation: str = Field(description="Step-by-step explanation of the score")
+
+class RetrievalQualityEvaluation(BaseModel):
+    relevance_score: float = Field(description="Score from 0-1 for relevance of retrieved documents")
+    coverage_score: float = Field(description="Score from 0-1 for coverage of required information")
+    explanation: str = Field(description="Explanation of the scores")
 
 class IssueTypeJudgeEvaluation(BaseModel):
     score: float = Field(description="Score from 0-1 for issue type classification accuracy")
@@ -90,6 +95,7 @@ Score from 0-1 where:
 1.0 = Complete response with all necessary information
 0.0 = Incomplete or missing critical information
 
+Special instruction: If 'Relevant docs retrieved' is NO, automatically score 0.
 Explain your reasoning step by step.
 """
 
@@ -100,6 +106,31 @@ Consider code references, documentation, and technical terminology.
 Score from 0-1 where:
 1.0 = Technically accurate in all aspects
 0.0 = Contains technical inaccuracies
+
+Special instruction: If 'Relevant docs retrieved' is NO, automatically score 0.
+
+Explain your reasoning step by step.
+"""
+
+RETRIEVAL_QUALITY_JUDGE_PROMPT = """
+You are evaluating the quality of document retrieval for a customer support issue.
+
+Issue: {issue_text}
+Retrieved Documents: {retrieved_docs}
+
+Score from 0-1 for:
+1. Relevance: How relevant are the retrieved documents to the issue? Consider:
+   - Are the sources directly addressing the issue?
+   - Do the sources contain specific, actionable information?
+   - Are the sources up-to-date and appropriate for the issue type?
+
+2. Coverage: Do the retrieved documents cover all necessary information? Consider:
+   - Are all aspects of the issue addressed?
+   - Are there any critical gaps in the information?
+   - Are there multiple sources providing complementary information?
+
+Note: If the answer indicates no documents were retrieved ("I don't have enough information" or "No relevant documentation found"), 
+score both relevance and coverage as 0.
 
 Explain your reasoning step by step.
 """
@@ -189,8 +220,15 @@ class ResponseCompletenessEvaluator(RunEvaluator):
         self.llm = ChatOpenAI(model="gpt-4", temperature=0)
         self.parser = PydanticOutputParser(pydantic_object=SimpleJudgeEvaluation)
     def evaluate_run(self, run, example, **kwargs):
+        retrieved_docs = run.outputs.get("retrieved_docs", [])
+        retrieval_status = "YES" if retrieved_docs else "NO"
         answer = run.outputs.get("answer", "")
-        prompt = f"""Response to evaluate: {answer}\n\n{COMPLETENESS_JUDGE_PROMPT}\n{self.parser.get_format_instructions()}"""
+        prompt = (
+            f"Relevant docs retrieved: {retrieval_status}\n"
+            f"Response to evaluate: {answer}\n\n"
+            f"{COMPLETENESS_JUDGE_PROMPT}\n"
+            f"{self.parser.get_format_instructions()}"
+        )
         result = self.llm.invoke(prompt)
         evaluation = self.parser.parse(result.content)
         return EvaluationResult(
@@ -205,8 +243,15 @@ class TechnicalAccuracyEvaluator(RunEvaluator):
         self.llm = ChatOpenAI(model="gpt-4", temperature=0)
         self.parser = PydanticOutputParser(pydantic_object=SimpleJudgeEvaluation)
     def evaluate_run(self, run, example, **kwargs):
+        retrieved_docs = run.outputs.get("retrieved_docs", [])
+        retrieval_status = "YES" if retrieved_docs else "NO"
         answer = run.outputs.get("answer", "")
-        prompt = f"""Response to evaluate: {answer}\n\n{TECHNICAL_ACCURACY_JUDGE_PROMPT}\n{self.parser.get_format_instructions()}"""
+        prompt = (
+            f"Relevant docs retrieved: {retrieval_status}\n"
+            f"Response to evaluate: {answer}\n\n"
+            f"{TECHNICAL_ACCURACY_JUDGE_PROMPT}\n"
+            f"{self.parser.get_format_instructions()}"
+        )
         result = self.llm.invoke(prompt)
         evaluation = self.parser.parse(result.content)
         return EvaluationResult(
@@ -214,6 +259,44 @@ class TechnicalAccuracyEvaluator(RunEvaluator):
             score=evaluation.score,
             comment=evaluation.explanation,
             evaluation_type="llm_judge"
+        )
+
+class RetrievalQualityEvaluator(RunEvaluator):
+    def __init__(self):
+        self.llm = ChatOpenAI(model="gpt-4", temperature=0)
+        self.parser = PydanticOutputParser(pydantic_object=RetrievalQualityEvaluation)
+    def evaluate_run(self, run, example, **kwargs):
+        issue_text = example.inputs.get("issue_text", "")
+        answer = run.outputs.get("answer", "")
+        
+        # Check if the answer indicates no docs were retrieved
+        if "I don't have enough information" in answer or "No relevant documentation found" in answer:
+            docs_text = "No documents were retrieved."
+        else:
+            # Extract source URLs from the answer to indicate retrieval
+            docs_text = "Documents were retrieved and used in the answer. Sources referenced: " + answer
+            
+        prompt = RETRIEVAL_QUALITY_JUDGE_PROMPT.format(
+            issue_text=issue_text,
+            retrieved_docs=docs_text
+        ) + "\n" + self.parser.get_format_instructions()
+        result = self.llm.invoke(prompt)
+        evaluation = self.parser.parse(result.content)
+        return EvaluationResults(
+            results=[
+                EvaluationResult(
+                    key="retrieval_relevance",
+                    score=evaluation.relevance_score,
+                    comment=evaluation.explanation,
+                    evaluation_type="llm_judge"
+                ),
+                EvaluationResult(
+                    key="retrieval_coverage",
+                    score=evaluation.coverage_score,
+                    comment=evaluation.explanation,
+                    evaluation_type="llm_judge"
+                )
+            ]
         )
 
 # ===== Main Execution =====
@@ -243,6 +326,8 @@ if __name__ == "__main__":
 
     # Define all evaluators
     evaluators = [
+        # Retrieval evaluator
+        RetrievalQualityEvaluator(),
         # Classification evaluators
         IssueTypeEvaluator(),
         SeverityEvaluator(),
@@ -258,7 +343,7 @@ if __name__ == "__main__":
         target,
         data="CE Triage App: E2E",
         evaluators=evaluators,
-        experiment_prefix="baseline",
+        experiment_prefix="sdk:",
         max_concurrency=2,
     )
 
