@@ -1,6 +1,6 @@
 # LangChain Support Query Router
 
-A customer engineering application that automatically triages and responds to Github issues on public repositories (defaulted to LangChain). The application classifies issues, assigns severity, and provides relevant documentation-based responses. It also supports eval using LangSmith.
+A customer engineering application that automatically triages and responds to Github issues on public repositories (defaulted to LangChain). The application classifies issues, assigns severity, and provides relevant documentation-based responses. It also supports comprehensive evaluation using LangSmith.
 
 ## Overview
 
@@ -22,6 +22,7 @@ The application processes issues from a CSV file (`langchain_issues_dataset.csv`
 OPENAI_API_KEY=your_openai_key
 LANGSMITH_API_KEY=your_langsmith_key
 LANGSMITH_PROJECT=your_project_name
+GITHUB_TOKEN=your_github_token  # Optional, for higher rate limits
 ```
 
 2. Install dependencies:
@@ -41,7 +42,7 @@ python chains.py
 ```bash
 python eval.py
 ```
-- This will run the evaluation workflow using LangSmith, applying LLM-as-a-judge evaluators to all outputs.
+- This will run the comprehensive evaluation workflow using LangSmith, applying multiple LLM-as-a-judge evaluators to all outputs.
 - After completion, a link to the experiment will be printed. Open this link to view and compare results in the LangSmith UI.
 
 ### Vectorize Documentation (if needed)
@@ -50,15 +51,32 @@ python vectorize_docs.py
 ```
 - This script builds or updates the vector store for LangChain documentation, used for retrieval in the main chain.
 
-## Evaluation & Experiment Comparison
-- Evaluations are run using `eval.py` and are tracked in LangSmith.
-- All evaluators use LLM-as-a-judge for robust, context-aware scoring.
+## Evaluation System
+
+The application includes a comprehensive evaluation system with multiple evaluators:
+
+### Classification Evaluators
+- **Issue Type Accuracy**: Evaluates the accuracy of issue type classification
+- **Severity Accuracy**: Assesses the correctness of severity assignments
+
+### Response Quality Evaluators
+- **Response Action Accuracy**: Evaluates if the response correctly addresses the issue
+- **Tone Appropriateness**: Assesses professionalism, empathy, clarity, and positivity
+- **Response Completeness**: Evaluates technical details, explanation quality, and references
+- **Technical Accuracy**: Assesses code references, documentation usage, and terminology
+
+### Retrieval Quality Evaluators
+- **Relevance Score**: Evaluates how relevant retrieved documents are to the issue
+- **Coverage Score**: Assesses if retrieved documents cover all necessary information
+
+All evaluators use LLM-as-a-judge for robust, context-aware scoring and provide detailed explanations for their assessments.
 
 ## Project Structure
 
 - `chains.py`: Main application logic and chain definitions
-- `eval.py`: Evaluation pipeline using LangSmith
+- `eval.py`: Comprehensive evaluation pipeline using LangSmith
 - `vectorize_docs.py`: Vector store setup for LangChain documentation
+- `get_github_issues.py`: GitHub issue fetching and dataset creation
 - `langchain_issues_dataset.csv`: Sample issues for testing
 - `.env`: Environment variables for API keys
 - `requirements.txt`: Python dependencies
@@ -67,3 +85,4 @@ python vectorize_docs.py
 - Make sure your dataset (`langchain_issues_dataset.csv`) includes both the issue description and URL for each example.
 - All evaluation results and experiment comparisons are available in the LangSmith UI.
 - You can add or modify evaluators in `eval.py` as needed for your use case.
+- The system uses GPT-4 for evaluation to ensure high-quality assessments.
