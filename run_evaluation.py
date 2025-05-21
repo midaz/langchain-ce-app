@@ -11,159 +11,148 @@ from langsmith.evaluation import EvaluationResult, RunEvaluator
 from dotenv import load_dotenv, find_dotenv
 _ = load_dotenv(find_dotenv()) 
 
-# Evaluation Models
-class ToneEvaluation(BaseModel):
+# Add new schemas and prompts for LLM-as-a-judge
+class IssueTypeJudgeEvaluation(BaseModel):
+    score: float = Field(description="Score from 0-1 for issue type classification accuracy")
+    explanation: str = Field(description="Explanation of the score")
+
+ISSUE_TYPE_JUDGE_PROMPT = """
+You are evaluating the accuracy of an issue type classification for a customer support issue.
+
+Expected issue type: {expected}
+Predicted issue type: {predicted}
+
+Score from 0-1 where:
+1.0 = Perfect match
+0.0 = Completely wrong
+
+Explain your reasoning step by step.
+"""
+
+class SeverityJudgeEvaluation(BaseModel):
+    score: float = Field(description="Score from 0-1 for severity accuracy")
+    explanation: str = Field(description="Explanation of the score")
+
+SEVERITY_JUDGE_PROMPT = """
+You are evaluating the accuracy of a severity classification for a customer support issue.
+
+Expected severity: {expected}
+Predicted severity: {predicted}
+
+Score from 0-1 where:
+1.0 = Perfect match
+0.0 = Completely wrong
+
+Explain your reasoning step by step.
+"""
+
+class ResponseActionJudgeEvaluation(BaseModel):
+    score: float = Field(description="Score from 0-1 for response action accuracy")
+    explanation: str = Field(description="Explanation of the score")
+
+RESPONSE_ACTION_JUDGE_PROMPT = """
+You are evaluating whether the response action correctly addresses the issue.
+
+Expected issue type: {expected_issue_type}
+Predicted issue type: {predicted_issue_type}
+Expected severity: {expected_severity}
+Predicted severity: {predicted_severity}
+Response: {answer}
+
+Score from 0-1 where:
+1.0 = Response action is fully appropriate
+0.0 = Response action is completely inappropriate
+
+Explain your reasoning step by step.
+"""
+
+# Refactor evaluators to use LLM-as-a-judge
+class IssueTypeEvaluator(RunEvaluator):
+    def __init__(self):
+        self.llm = ChatOpenAI(model="gpt-4", temperature=0)
+        self.parser = PydanticOutputParser(pydantic_object=IssueTypeJudgeEvaluation)
+    def evaluate_run(self, run, example, **kwargs):
+        predicted = run.outputs.get("issue_type", "")
+        expected = example.outputs.get("issue_type", "")
+        prompt = ISSUE_TYPE_JUDGE_PROMPT.format(expected=expected, predicted=predicted) + "\n" + self.parser.get_format_instructions()
+        result = self.llm.invoke(prompt)
+        evaluation = self.parser.parse(result.content)
+        return EvaluationResult(
+            key="issue_type_accuracy",
+            score=evaluation.score,
+            comment=evaluation.explanation,
+            evaluation_type="llm_judge"
+        )
+
+class SeverityEvaluator(RunEvaluator):
+    def __init__(self):
+        self.llm = ChatOpenAI(model="gpt-4", temperature=0)
+        self.parser = PydanticOutputParser(pydantic_object=SeverityJudgeEvaluation)
+    def evaluate_run(self, run, example, **kwargs):
+        predicted = run.outputs.get("severity", "")
+        expected = example.outputs.get("severity", "")
+        prompt = SEVERITY_JUDGE_PROMPT.format(expected=expected, predicted=predicted) + "\n" + self.parser.get_format_instructions()
+        result = self.llm.invoke(prompt)
+        evaluation = self.parser.parse(result.content)
+        return EvaluationResult(
+            key="severity_accuracy",
+            score=evaluation.score,
+            comment=evaluation.explanation,
+            evaluation_type="llm_judge"
+        )
+
+class ResponseActionEvaluator(RunEvaluator):
+    def __init__(self):
+        self.llm = ChatOpenAI(model="gpt-4", temperature=0)
+        self.parser = PydanticOutputParser(pydantic_object=ResponseActionJudgeEvaluation)
+    def evaluate_run(self, run, example, **kwargs):
+        answer = run.outputs.get("answer", "")
+        predicted_issue_type = run.outputs.get("issue_type", "")
+        predicted_severity = run.outputs.get("severity", "")
+        expected_issue_type = example.outputs.get("issue_type", "")
+        expected_severity = example.outputs.get("severity", "")
+        prompt = RESPONSE_ACTION_JUDGE_PROMPT.format(
+            expected_issue_type=expected_issue_type,
+            predicted_issue_type=predicted_issue_type,
+            expected_severity=expected_severity,
+            predicted_severity=predicted_severity,
+            answer=answer
+        ) + "\n" + self.parser.get_format_instructions()
+        result = self.llm.invoke(prompt)
+        evaluation = self.parser.parse(result.content)
+        return EvaluationResult(
+            key="response_action_accuracy",
+            score=evaluation.score,
+            comment=evaluation.explanation,
+            evaluation_type="llm_judge"
+        )
+
+
+class SimpleJudgeEvaluation(BaseModel):
     score: float = Field(description="Overall score from 0-1")
     explanation: str = Field(description="Step-by-step explanation of the score")
-    professionalism: float = Field(description="Score for professionalism")
-    empathy: float = Field(description="Score for empathy")
-    clarity: float = Field(description="Score for clarity")
-    positivity: float = Field(description="Score for positivity")
 
-class CompletenessEvaluation(BaseModel):
-    score: float = Field(description="Overall score from 0-1")
-    explanation: str = Field(description="Step-by-step explanation of the score")
-    technical_details: float = Field(description="Score for technical details")
-    explanation_quality: float = Field(description="Score for explanation quality")
-    next_steps: float = Field(description="Score for next steps")
-    references: float = Field(description="Score for references and links")
+# Update ToneAppropriatenessEvaluator
+TONE_JUDGE_PROMPT = """
+You are evaluating the tone of a customer support response.
 
-class TechnicalAccuracyEvaluation(BaseModel):
-    score: float = Field(description="Overall score from 0-1")
-    explanation: str = Field(description="Step-by-step explanation of the score")
-    code_accuracy: float = Field(description="Score for code references accuracy")
-    doc_accuracy: float = Field(description="Score for documentation accuracy")
-    technical_terms: float = Field(description="Score for technical terminology")
-
-# Evaluation Prompts
-TONE_EVALUATION_PROMPT = """You are evaluating the tone of a customer support response.
-
-Consider:
-1. Professionalism - Is the response professional and appropriate?
-2. Empathy - Does it show understanding of the user's issue?
-3. Clarity - Is the response clear and easy to understand?
-4. Positivity - Does it maintain a positive, helpful tone?
-
+Consider professionalism, empathy, clarity, and positivity.
 Score from 0-1 where:
 1.0 = Perfect professional tone
 0.0 = Unprofessional or inappropriate tone
 
-Explain your reasoning step by step."""
+Explain your reasoning step by step.
+"""
 
-COMPLETENESS_EVALUATION_PROMPT = """You are evaluating the completeness of a customer support response.
-
-Consider:
-1. Technical Details - Does it include necessary technical information?
-2. Explanation Quality - Is the explanation thorough and clear?
-3. Next Steps - Does it provide clear next steps or solutions?
-4. References - Does it include relevant documentation links?
-
-Score from 0-1 where:
-1.0 = Complete response with all necessary information
-0.0 = Incomplete or missing critical information
-
-Explain your reasoning step by step."""
-
-TECHNICAL_ACCURACY_PROMPT = """You are evaluating the technical accuracy of a customer support response.
-
-Consider:
-1. Code References - Are code examples or references accurate?
-2. Documentation - Are documentation links and references correct?
-3. Technical Terms - Is technical terminology used correctly?
-
-Score from 0-1 where:
-1.0 = Technically accurate in all aspects
-0.0 = Contains technical inaccuracies
-
-Explain your reasoning step by step."""
-
-# Primary Evaluators (Accuracy-based)
-class IssueTypeEvaluator(RunEvaluator):
-    """Evaluates the accuracy of issue type classification."""
-    def evaluate_run(self, run, example, **kwargs):
-        predicted = run.outputs.get("issue_type", "")
-        expected = example.outputs.get("issue_type", "")
-        score = 1.0 if predicted.lower() == expected.lower() else 0.0
-        return EvaluationResult(
-            key="issue_type_accuracy",
-            score=score,
-            comment=f"Predicted: {predicted}, Expected: {expected}",
-            evaluation_type="accuracy"
-        )
-
-class SeverityEvaluator(RunEvaluator):
-    """Evaluates the accuracy of severity score prediction."""
-    def evaluate_run(self, run, example, **kwargs):
-        predicted = run.outputs.get("severity", "")
-        expected = example.outputs.get("severity", 0)
-        
-        # Extract severity number from formatted string
-        try:
-            if "severity" in str(predicted).lower():
-                predicted_num = int(str(predicted).split("severity")[1].strip().split()[0])
-            else:
-                predicted_num = int(str(predicted).strip().split()[0])
-        except (ValueError, IndexError):
-            predicted_num = 0
-            
-        score = 1.0 if predicted_num == expected else 0.0
-        return EvaluationResult(
-            key="severity_accuracy",
-            score=score,
-            comment=f"Predicted: {predicted_num}, Expected: {expected}",
-            evaluation_type="accuracy"
-        )
-
-class ResponseActionEvaluator(RunEvaluator):
-    """Evaluates if the response correctly addresses the issue."""
-    def evaluate_run(self, run, example, **kwargs):
-        answer = run.outputs.get("answer", "")
-        issue_type = run.outputs.get("issue_type", "")
-        severity = run.outputs.get("severity", "")
-        
-        # Extract severity number from formatted string
-        try:
-            if "severity" in str(severity).lower():
-                severity_num = int(str(severity).split("severity")[1].strip().split()[0])
-            else:
-                severity_num = int(str(severity).strip().split()[0])
-        except (ValueError, IndexError):
-            severity_num = 0
-        
-        # Check if response matches the severity and type
-        has_appropriate_action = (
-            (severity_num >= 3 and "urgent" in answer.lower()) or
-            (severity_num <= 2 and "can be addressed" in answer.lower())
-        )
-        
-        has_type_specific_guidance = (
-            (issue_type == "bug report" and "fix" in answer.lower()) or
-            (issue_type == "feature request" and "implement" in answer.lower()) or
-            (issue_type == "question" and "answer" in answer.lower())
-        )
-        
-        score = sum([has_appropriate_action, has_type_specific_guidance]) / 2.0
-        return EvaluationResult(
-            key="response_action_accuracy",
-            score=score,
-            comment=f"Appropriate action: {has_appropriate_action}, Type-specific guidance: {has_type_specific_guidance}",
-            evaluation_type="accuracy"
-        )
-
-# Supplementary Evaluators (LLM-as-judge)
 class ToneAppropriatenessEvaluator(RunEvaluator):
-    """Uses LLM to evaluate if the response maintains appropriate professional tone."""
     def __init__(self):
         self.llm = ChatOpenAI(model="gpt-4", temperature=0)
-        self.parser = PydanticOutputParser(pydantic_object=ToneEvaluation)
-    
+        self.parser = PydanticOutputParser(pydantic_object=SimpleJudgeEvaluation)
     def evaluate_run(self, run, example, **kwargs):
         answer = run.outputs.get("answer", "")
-        prompt = f"""Response to evaluate: {answer}\n\n{TONE_EVALUATION_PROMPT}\n{self.parser.get_format_instructions()}"""
-        
+        prompt = f"""Response to evaluate: {answer}\n\n{TONE_JUDGE_PROMPT}\n{self.parser.get_format_instructions()}"""
         result = self.llm.invoke(prompt)
         evaluation = self.parser.parse(result.content)
-        
         return EvaluationResult(
             key="tone_appropriateness",
             score=evaluation.score,
@@ -171,19 +160,27 @@ class ToneAppropriatenessEvaluator(RunEvaluator):
             evaluation_type="llm_judge"
         )
 
+# Update ResponseCompletenessEvaluator
+COMPLETENESS_JUDGE_PROMPT = """
+You are evaluating the completeness of a customer support response.
+
+Consider technical details, explanation quality, next steps, and references.
+Score from 0-1 where:
+1.0 = Complete response with all necessary information
+0.0 = Incomplete or missing critical information
+
+Explain your reasoning step by step.
+"""
+
 class ResponseCompletenessEvaluator(RunEvaluator):
-    """Uses LLM to evaluate if the response is complete and comprehensive."""
     def __init__(self):
         self.llm = ChatOpenAI(model="gpt-4", temperature=0)
-        self.parser = PydanticOutputParser(pydantic_object=CompletenessEvaluation)
-    
+        self.parser = PydanticOutputParser(pydantic_object=SimpleJudgeEvaluation)
     def evaluate_run(self, run, example, **kwargs):
         answer = run.outputs.get("answer", "")
-        prompt = f"""Response to evaluate: {answer}\n\n{COMPLETENESS_EVALUATION_PROMPT}\n{self.parser.get_format_instructions()}"""
-        
+        prompt = f"""Response to evaluate: {answer}\n\n{COMPLETENESS_JUDGE_PROMPT}\n{self.parser.get_format_instructions()}"""
         result = self.llm.invoke(prompt)
         evaluation = self.parser.parse(result.content)
-        
         return EvaluationResult(
             key="response_completeness",
             score=evaluation.score,
@@ -191,19 +188,27 @@ class ResponseCompletenessEvaluator(RunEvaluator):
             evaluation_type="llm_judge"
         )
 
+# Update TechnicalAccuracyEvaluator
+TECHNICAL_ACCURACY_JUDGE_PROMPT = """
+You are evaluating the technical accuracy of a customer support response.
+
+Consider code references, documentation, and technical terminology.
+Score from 0-1 where:
+1.0 = Technically accurate in all aspects
+0.0 = Contains technical inaccuracies
+
+Explain your reasoning step by step.
+"""
+
 class TechnicalAccuracyEvaluator(RunEvaluator):
-    """Uses LLM to evaluate the technical accuracy of the response."""
     def __init__(self):
         self.llm = ChatOpenAI(model="gpt-4", temperature=0)
-        self.parser = PydanticOutputParser(pydantic_object=TechnicalAccuracyEvaluation)
-    
+        self.parser = PydanticOutputParser(pydantic_object=SimpleJudgeEvaluation)
     def evaluate_run(self, run, example, **kwargs):
         answer = run.outputs.get("answer", "")
-        prompt = f"""Response to evaluate: {answer}\n\n{TECHNICAL_ACCURACY_PROMPT}\n{self.parser.get_format_instructions()}"""
-        
+        prompt = f"""Response to evaluate: {answer}\n\n{TECHNICAL_ACCURACY_JUDGE_PROMPT}\n{self.parser.get_format_instructions()}"""
         result = self.llm.invoke(prompt)
         evaluation = self.parser.parse(result.content)
-        
         return EvaluationResult(
             key="technical_accuracy",
             score=evaluation.score,
@@ -255,7 +260,7 @@ if __name__ == "__main__":
     print("Experiment results:", experiment_results)
     print("Check the LangSmith UI for the new experiment link!")
     
-    # You can run additional experiments by changing parameters
+    # Run experiments by changing parameters
     # run_evaluation(
     #     experiment_name="improved-prompt",
     #     model_version="gpt-4"
