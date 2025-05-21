@@ -31,7 +31,7 @@ else:
     llm_model = "gpt-3.5-turbo-0301"
 
 #read dataset
-df = pd.read_csv('ce-app/langchain_issues_dataset.csv')
+df = pd.read_csv('langchain_issues_dataset.csv')
 
 """
 Issue Chain Architecture:
@@ -52,7 +52,7 @@ Issue Chain Architecture:
 ###Create IssueTypeChain
 llm = ChatOpenAI(temperature=0, model=llm_model)
 
-@traceable(run_type="llm")
+@traceable(run_type="llm", metadata={"model": llm_model})
 def call_llm(messages: list) -> str:
     """Wrapper function for LLM calls to enable tracing."""
     return llm.invoke(messages)
@@ -103,11 +103,11 @@ def run_severity_chain(issue_text: str, issue_type: str) -> dict:
 ###Create CategoryTypeChain
 category_type_prompt = ChatPromptTemplate.from_messages([
     ("system", """You are a category classifier. Here are the category definitions:
-     - setup: Installation, configuration, or environment setup issues
-     - chains: Questions about LangChain chains, their creation, or usage
-     - agents: Questions about LangChain agents, their creation, or usage
-     - memory: Questions about memory components or state management
-     - retrieval: Questions about document loading, vector stores, or retrieval
+     - setup: Issues about installation, configuration, or environment setup
+     - chains: Issues about LangChain chains, their creation, or usage
+     - agents: Issues about LangChain agents, their creation, or usage
+     - memory: Issues about memory components or state management
+     - retrieval: Issues about document loading, vector stores, or retrieval
      - other: Any other category not listed above
      
      Task: Classify the issue into one of these categories based on the issue type and description.
@@ -137,14 +137,17 @@ retriever = get_vector_db_retriever()
 retriever_prompt = ChatPromptTemplate.from_messages([
     ("system", """You are a support assistant. Use the provided documentation to answer the question.
      If the documentation doesn't contain the answer, say "I don't have enough information to answer this question."
-     If there is documentation, provide the URL to the documentation at the end of your answer like "[Source: url_path]".
+     
+     For each piece of information you use from the documentation, include the source URL in your answer.
+     The source URLs are provided in the documentation in the format [Source: url_path].
+     Make sure to reference these sources in your answer.
      
      Documentation:
      {docs}
      
      Question: {question}
      
-     Provide a clear, concise answer based on the documentation."""),
+     Provide a clear, concise answer based on the documentation. Include relevant source URLs."""),
     ("human", "{question}")
 ])
 
