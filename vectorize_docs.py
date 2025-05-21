@@ -7,11 +7,14 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders.sitemap import SitemapLoader
 from langchain_community.vectorstores import SKLearnVectorStore
 from langchain_openai import OpenAIEmbeddings
-from dotenv import load_dotenv, find_dotenv
 import math
 
-# Load environment variables
-_ = load_dotenv(find_dotenv())
+
+#read local .env file
+from dotenv import load_dotenv, find_dotenv
+_ = load_dotenv(find_dotenv()) 
+
+
 
 # Configure requests to use certifi's certificates
 requests.packages.urllib3.util.ssl_.DEFAULT_CERTS = certifi.where()
