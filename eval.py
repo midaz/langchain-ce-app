@@ -7,15 +7,28 @@ import os
 import sys
 from langsmith.evaluation import EvaluationResult, RunEvaluator
 
-#read local .env file
+# Read local .env file
 from dotenv import load_dotenv, find_dotenv
 _ = load_dotenv(find_dotenv()) 
 
-# Add new schemas and prompts for LLM-as-a-judge
+# ===== Evaluation Schemas =====
+class SimpleJudgeEvaluation(BaseModel):
+    score: float = Field(description="Overall score from 0-1")
+    explanation: str = Field(description="Step-by-step explanation of the score")
+
 class IssueTypeJudgeEvaluation(BaseModel):
     score: float = Field(description="Score from 0-1 for issue type classification accuracy")
     explanation: str = Field(description="Explanation of the score")
 
+class SeverityJudgeEvaluation(BaseModel):
+    score: float = Field(description="Score from 0-1 for severity accuracy")
+    explanation: str = Field(description="Explanation of the score")
+
+class ResponseActionJudgeEvaluation(BaseModel):
+    score: float = Field(description="Score from 0-1 for response action accuracy")
+    explanation: str = Field(description="Explanation of the score")
+
+# ===== Evaluation Prompts =====
 ISSUE_TYPE_JUDGE_PROMPT = """
 You are evaluating the accuracy of an issue type classification for a customer support issue.
 
@@ -29,10 +42,6 @@ Score from 0-1 where:
 Explain your reasoning step by step.
 """
 
-class SeverityJudgeEvaluation(BaseModel):
-    score: float = Field(description="Score from 0-1 for severity accuracy")
-    explanation: str = Field(description="Explanation of the score")
-
 SEVERITY_JUDGE_PROMPT = """
 You are evaluating the accuracy of a severity classification for a customer support issue.
 
@@ -45,10 +54,6 @@ Score from 0-1 where:
 
 Explain your reasoning step by step.
 """
-
-class ResponseActionJudgeEvaluation(BaseModel):
-    score: float = Field(description="Score from 0-1 for response action accuracy")
-    explanation: str = Field(description="Explanation of the score")
 
 RESPONSE_ACTION_JUDGE_PROMPT = """
 You are evaluating whether the response action correctly addresses the issue.
@@ -66,7 +71,41 @@ Score from 0-1 where:
 Explain your reasoning step by step.
 """
 
-# Refactor evaluators to use LLM-as-a-judge
+TONE_JUDGE_PROMPT = """
+You are evaluating the tone of a customer support response.
+
+Consider professionalism, empathy, clarity, and positivity.
+Score from 0-1 where:
+1.0 = Perfect professional tone
+0.0 = Unprofessional or inappropriate tone
+
+Explain your reasoning step by step.
+"""
+
+COMPLETENESS_JUDGE_PROMPT = """
+You are evaluating the completeness of a customer support response.
+
+Consider technical details, explanation quality, next steps, and references.
+Score from 0-1 where:
+1.0 = Complete response with all necessary information
+0.0 = Incomplete or missing critical information
+
+Explain your reasoning step by step.
+"""
+
+TECHNICAL_ACCURACY_JUDGE_PROMPT = """
+You are evaluating the technical accuracy of a customer support response.
+
+Consider code references, documentation, and technical terminology.
+Score from 0-1 where:
+1.0 = Technically accurate in all aspects
+0.0 = Contains technical inaccuracies
+
+Explain your reasoning step by step.
+"""
+
+# ===== Classification Evaluators =====
+# These evaluators assess how well the system categorizes the issue
 class IssueTypeEvaluator(RunEvaluator):
     def __init__(self):
         self.llm = ChatOpenAI(model="gpt-4", temperature=0)
@@ -101,6 +140,8 @@ class SeverityEvaluator(RunEvaluator):
             evaluation_type="llm_judge"
         )
 
+# ===== Response Quality Evaluators =====
+# These evaluators assess the quality and appropriateness of the system's response
 class ResponseActionEvaluator(RunEvaluator):
     def __init__(self):
         self.llm = ChatOpenAI(model="gpt-4", temperature=0)
@@ -127,23 +168,6 @@ class ResponseActionEvaluator(RunEvaluator):
             evaluation_type="llm_judge"
         )
 
-
-class SimpleJudgeEvaluation(BaseModel):
-    score: float = Field(description="Overall score from 0-1")
-    explanation: str = Field(description="Step-by-step explanation of the score")
-
-# Update ToneAppropriatenessEvaluator
-TONE_JUDGE_PROMPT = """
-You are evaluating the tone of a customer support response.
-
-Consider professionalism, empathy, clarity, and positivity.
-Score from 0-1 where:
-1.0 = Perfect professional tone
-0.0 = Unprofessional or inappropriate tone
-
-Explain your reasoning step by step.
-"""
-
 class ToneAppropriatenessEvaluator(RunEvaluator):
     def __init__(self):
         self.llm = ChatOpenAI(model="gpt-4", temperature=0)
@@ -159,18 +183,6 @@ class ToneAppropriatenessEvaluator(RunEvaluator):
             comment=evaluation.explanation,
             evaluation_type="llm_judge"
         )
-
-# Update ResponseCompletenessEvaluator
-COMPLETENESS_JUDGE_PROMPT = """
-You are evaluating the completeness of a customer support response.
-
-Consider technical details, explanation quality, next steps, and references.
-Score from 0-1 where:
-1.0 = Complete response with all necessary information
-0.0 = Incomplete or missing critical information
-
-Explain your reasoning step by step.
-"""
 
 class ResponseCompletenessEvaluator(RunEvaluator):
     def __init__(self):
@@ -188,18 +200,6 @@ class ResponseCompletenessEvaluator(RunEvaluator):
             evaluation_type="llm_judge"
         )
 
-# Update TechnicalAccuracyEvaluator
-TECHNICAL_ACCURACY_JUDGE_PROMPT = """
-You are evaluating the technical accuracy of a customer support response.
-
-Consider code references, documentation, and technical terminology.
-Score from 0-1 where:
-1.0 = Technically accurate in all aspects
-0.0 = Contains technical inaccuracies
-
-Explain your reasoning step by step.
-"""
-
 class TechnicalAccuracyEvaluator(RunEvaluator):
     def __init__(self):
         self.llm = ChatOpenAI(model="gpt-4", temperature=0)
@@ -216,6 +216,7 @@ class TechnicalAccuracyEvaluator(RunEvaluator):
             evaluation_type="llm_judge"
         )
 
+# ===== Main Execution =====
 if __name__ == "__main__":
     # Check for required environment variables
     required_vars = ["LANGSMITH_API_KEY", "LANGSMITH_PROJECT"]
@@ -240,15 +241,19 @@ if __name__ == "__main__":
             issue_url=inputs["issue_url"]
         )
 
+    # Define all evaluators
     evaluators = [
+        # Classification evaluators
         IssueTypeEvaluator(),
         SeverityEvaluator(),
+        # Response quality evaluators
         ResponseActionEvaluator(),
         ToneAppropriatenessEvaluator(),
         ResponseCompletenessEvaluator(),
         TechnicalAccuracyEvaluator()
     ]
 
+    # Run the evaluation
     experiment_results = client.evaluate(
         target,
         data="CE Triage App: E2E",
